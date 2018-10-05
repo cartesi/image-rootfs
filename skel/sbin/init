@@ -6,6 +6,23 @@ export HOME=/root
 mount /proc
 mount /sys
 
+mkdir -p /run
+mount -t tmpfs -o nosuid,noexec,relatime,mode=755 tmpfs /run
+mkdir -p /run/lock
+mount -t tmpfs tmpfs -o nosuid,nodev,noexec,relatime /run/lock
+
+if [ -b /dev/mtdblock1 ]; then
+	name=`cat /sys/block/mtdblock1/device/name`
+	mkdir -p /mnt/$name
+	mount -t ext2 /dev/mtdblock1 /mnt/$name
+fi
+
+if [ -b /dev/mtdblock2 ]; then
+	name=`cat /sys/block/mtdblock2/device/name`
+	mkdir -p /mnt/$name
+	mount -t ext2 /dev/mtdblock2 /mnt/$name
+fi
+
 ifconfig lo 127.0.0.1
 
 cd $HOME
