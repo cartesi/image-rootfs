@@ -24,11 +24,13 @@ RUN \
         https://github.com/cartesi/buildroot.git
 
 COPY skel $BASE/buildroot/skel
+COPY cartesi-config $BASE/buildroot
 
 # Never use -jN with buildroot
 RUN \
     mkdir -p $BASE/buildroot/work && \
     cd $BASE/buildroot && \
+    git pull && \
     cp cartesi-config work/.config && \
     make O=work olddefconfig && \
     make -C work && \
