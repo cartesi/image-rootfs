@@ -1,13 +1,20 @@
-.PHONY: build push
+.PHONY: build push run share
+
+IMG:=cartesi/image-rootfs
+BASE:=/opt/riscv
+ART:=$(BASE)/rootfs.ext2
 
 build:
-	docker build -t cartesi/image-rootfs:latest .
+	docker build -t $(IMG) .
 
-push:
-	docker push cartesi/image-rootfs:latest
+push: build
+	docker push $(IMG)
 
-run:
-	docker run -it --rm cartesi/image-rootfs:latest
+run: build
+	docker run -it --rm $(IMG)
 
 share:
-	docker run -it --rm -v `pwd`:/opt/riscv/host cartesi/image-rootfs:latest
+	docker run -it --rm -v `pwd`:$(BASE)/host $(IMG)
+
+copy: build
+	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID

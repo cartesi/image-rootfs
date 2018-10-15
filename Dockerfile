@@ -34,8 +34,7 @@ RUN \
     cp cartesi-config work/.config && \
     make O=work olddefconfig && \
     make -C work && \
-    cp work/images/rootfs.ext2 $BASE && \
-    \rm -rf work
+    cp work/images/rootfs.ext2 $BASE
 
 USER root
 
