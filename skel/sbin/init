@@ -27,6 +27,12 @@ else
 	setsid sh -c 'exec sh < /dev/hvc0 > /dev/hvc0 2>&1'
 fi
 
+for dev in /dev/mtdblock[1-7]; do
+    if [ -b $dev ]; then
+        umount $dev
+    fi
+done
+
 mount -o ro,remount /
 
 poweroff -f
