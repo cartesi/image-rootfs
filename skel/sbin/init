@@ -8,10 +8,9 @@ mount /sys
 
 for dev in /dev/mtdblock[1-7]; do
     if [ -b $dev ]; then
-        mtdblock=`basename $dev`
-        mntpoint=`cat /sys/block/${mtdblock}/device/name`
+        mntpoint=`blkid -o export ${dev}| grep LABEL | cut -d "=" -f 2`
         mkdir -p /mnt/$mntpoint
-        mount -t ext2 /dev/${mtdblock} /mnt/${mntpoint}
+        mount -t ext2 ${dev} /mnt/${mntpoint}
     fi
 done
 
