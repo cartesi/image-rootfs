@@ -13,12 +13,14 @@
 
 .PHONY: build push run share
 
-TAG ?= latest
+TAG ?= devel
 TOOLCHAIN_TAG ?=
+NEW_TAG ?= latest
 
 CONTAINER_BASE := /opt/cartesi/image-rootfs
 
-IMG:=cartesi/image-rootfs:$(TAG)
+IMG_REPO:=cartesi/image-rootfs
+IMG:=$(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
 ART:=$(BASE)/rootfs.ext2
 
@@ -44,8 +46,13 @@ run:
 		-w $(CONTAINER_BASE) \
 		$(IMG) $(CONTAINER_COMMAND)
 
+tag:
+	docker tag $(IMG) $(IMG_REPO):$(NEW_TAG)
+
 run-as-root:
 	docker run --hostname toolchain-env -it --rm \
+		-v `pwd`:$(CONTAINER_BASE) \
+		-w $(CONTAINER_BASE) \
 		$(IMG) $(CONTAINER_COMMAND)
 
 copy: build
