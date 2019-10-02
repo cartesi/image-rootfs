@@ -21,7 +21,7 @@ mount /proc
 mount /sys
 
 for dev in /dev/mtdblock[1-7]; do
-    if [ -b $dev ]; then
+    if [ -b $dev -a "$(blkid -s TYPE -o value $dev)" = "ext2" ]; then
         mtdblock=`basename $dev`
         mntpoint=`cat /sys/block/${mtdblock}/device/name`
         mkdir -p /mnt/$mntpoint
@@ -42,7 +42,7 @@ else
 fi
 
 for dev in /dev/mtdblock[1-7]; do
-    if [ -b $dev ]; then
+    if [ -b $dev -a "$(blkid -s TYPE -o value $dev)" = "ext2" ]; then
         umount $dev
     fi
 done
