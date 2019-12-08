@@ -19,9 +19,9 @@ jobs:
       - name: Publish to DockerHub
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
-          docker tag cartesi/image-rootfs:devel cartesi/image-rootfs:${GITHUB_REF:11}
+          docker tag cartesi/rootfs:devel cartesi/rootfs:${GITHUB_REF:11}
           echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
-          docker push cartesi/image-rootfs:${GITHUB_REF:11}
+          docker push cartesi/rootfs:${GITHUB_REF:11}
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}

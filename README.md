@@ -2,7 +2,7 @@
 
 # Cartesi Machine Image RootFS 
 
-The Cartesi Image RootFS is the repository that provides the Docker configuration files to build the `rootfs.ext2` testing filesystem. This is used to run a Linux environment on the Cartesi Machine Emulator reference implementation. The current image is based on the `cartesi/image-toolchain` that uses Ubuntu 18.04 and GNU GCC 8.3.0. The `rootfs.ext2` is built with Buildroot 2019.05.1 targeting the RISC-V RV64IMA with ABI LP64 architecture.
+The Cartesi Image RootFS is the repository that provides the Docker configuration files to build the `rootfs.ext2` testing filesystem. This is used to run a Linux environment on the Cartesi Machine Emulator reference implementation. The current image is based on the `cartesi/toolchain` that uses Ubuntu 18.04 and GNU GCC 8.3.0. The `rootfs.ext2` is built with Buildroot 2019.05.1 targeting the RISC-V RV64IMA with ABI LP64 architecture.
 
 ## Getting Started
 
@@ -29,8 +29,8 @@ To remove the generated images from your system, please refer to the Docker docu
 
 The following options are available as `make` targets:
 
-- **build**: builds the docker image-rootfs image
-- **copy**: builds the imgae-rootfs image and copy it's artifact to the host 
+- **build**: builds the docker rootfs image
+- **copy**: builds the rootfs image and copy it's artifact to the host 
 - **run**: runs the generated image with current user UID and GID
 - **run-as-root**: runs the generated image as root
 - **push**: pushes the image to the registry repository
@@ -40,7 +40,7 @@ The following options are available as `make` targets:
 You can pass the following variables to the make target if you wish to use different docker image tags.
 
 - TAG: image-roofs image tag
-- TOOLCHAIN\_TAG: image-toolchain image tag
+- TOOLCHAIN\_TAG: toolchain image tag
 
 ```
 $ make build TAG=mytag
@@ -65,10 +65,10 @@ $ make run
 
 ## Contributing
 
-Thank you for your interest in Cartesi! Head over to our [Contributing Guidelines](https://github.com/cartesi/image-rootfs/blob/master/CONTRIBUTING.md) for instructions on how to sign our Contributors Agreement and get started with
+Thank you for your interest in Cartesi! Head over to our [Contributing Guidelines](CONTRIBUTING.md) for instructions on how to sign our Contributors Agreement and get started with
 Cartesi!
 
-Please note we have a [Code of Conduct](https://github.com/cartesi/image-rootfs/blob/master/CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+Please note we have a [Code of Conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 ## Authors
 
@@ -78,5 +78,5 @@ Please note we have a [Code of Conduct](https://github.com/cartesi/image-rootfs/
 ## License
 
 The image-rootfs repository and all contributions are licensed under
-[APACHE 2.0](https://www.apache.org/licenses/LICENSE-2.0). Please review our [LICENSE](https://github.com/cartesi/image-rootfs/blob/master/LICENSE) file.
+[APACHE 2.0](https://www.apache.org/licenses/LICENSE-2.0). Please review our [LICENSE](LICENSE) file.
 

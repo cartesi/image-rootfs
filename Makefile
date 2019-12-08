@@ -14,12 +14,12 @@
 .PHONY: build push run share
 
 TAG ?= devel
-TOOLCHAIN_TAG ?=
+TOOLCHAIN_TAG ?= 0.1.0
 NEW_TAG ?= latest
 
-CONTAINER_BASE := /opt/cartesi/image-rootfs
+CONTAINER_BASE := /opt/cartesi/rootfs
 
-IMG_REPO:=cartesi/image-rootfs
+IMG_REPO:=cartesi/rootfs
 IMG:=$(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
 ART:=$(BASE)/rootfs.ext2
