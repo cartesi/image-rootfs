@@ -14,7 +14,7 @@
 .PHONY: build push run share
 
 TAG ?= devel
-TOOLCHAIN_TAG ?= 0.1.0
+TOOLCHAIN_TAG ?= 0.2.0
 NEW_TAG ?= latest
 
 CONTAINER_BASE := /opt/cartesi/rootfs
