@@ -23,6 +23,7 @@ IMG_REPO:=cartesi/rootfs
 IMG:=$(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
 ART:=$(BASE)/rootfs.ext2
+HTIF_BIN:=tools/linux/extra/htif
 
 ifneq ($(TOOLCHAIN_TAG),)
 BUILD_ARGS := --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
@@ -30,7 +31,18 @@ endif
 
 all: copy
 
-build:
+submodules:
+	git submodule update --init --recursive
+
+$(HTIF_BIN):
+	$(MAKE) -C tools/linux/htif
+
+build-htif: $(HTIF_BIN)
+
+clean:
+	rm -f rootfs.ext2 $(HTIF_BIN)
+
+build: $(HTIF_BIN)
 	docker build -t $(IMG) $(BUILD_ARGS) .
 
 push:

@@ -5,6 +5,10 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
+        with:
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+
       - name: Build
         run: make -j$(nproc)
 
@@ -20,7 +24,7 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-    
+
       - name: Publish <version> to Docker Hub
         run: |
           docker tag cartesi/rootfs:devel cartesi/rootfs:${GITHUB_REF:11}

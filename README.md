@@ -14,6 +14,7 @@ The Cartesi Image RootFS is the repository that provides the Docker configuratio
 ### Build
 
 ```bash
+$ make submodules 
 $ make build
 ```
 
@@ -34,6 +35,7 @@ The following options are available as `make` targets:
 - **run**: runs the generated image with current user UID and GID
 - **run-as-root**: runs the generated image as root
 - **push**: pushes the image to the registry repository
+- **submodules**: updates the git submodules recusively 
 
 #### Makefile container options
 
