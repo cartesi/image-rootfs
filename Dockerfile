@@ -28,7 +28,7 @@ ENV RISCV "$BASE/riscv64-unknown-linux-gnu"
 ENV PATH "$RISCV/bin:${OLDPATH}"
 
 RUN \
-    git clone --branch 2019.11 --depth 1 \
+    git clone --branch 2020.02 --depth 1 \
         https://github.com/buildroot/buildroot.git
 
 COPY skel $BASE/buildroot/skel
