@@ -33,13 +33,12 @@ ifconfig lo 127.0.0.1
 
 cd $HOME
 
-cmd=$(echo $1 | cut -d " " -f1)
-
-if [ -x "$1" ]; then
-	/bin/sh -c "$*"
+if [ -n "$*" ]; then
+	setsid cttyhack /bin/sh -c "$*"
 else
-	setsid sh -c 'exec sh < /dev/hvc0 > /dev/hvc0 2>&1'
+	echo "Nothing to do."
 fi
+
 
 for dev in /dev/mtdblock[1-7]; do
     if [ -b $dev -a "$(blkid -s TYPE -o value $dev)" = "ext2" ]; then

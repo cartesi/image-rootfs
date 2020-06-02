@@ -33,6 +33,7 @@ RUN \
 
 COPY skel $BASE/buildroot/skel
 COPY cartesi-config $BASE/buildroot
+COPY cartesi-busybox-fragment $BASE/buildroot
 COPY patches $BASE/buildroot/patches
 COPY tools/linux/htif/extra $BASE/buildroot/skel/opt/cartesi/bin
 
