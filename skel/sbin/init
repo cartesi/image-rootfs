@@ -14,7 +14,7 @@
 #
 
 
-export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/opt/cartesi/bin
 export HOME=/root
 
 mount /proc
