@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Discover host directory mounted inside docker
+LOCAL_VOLUME_MOUNT=$(cd $(dirname ${BASH_SOURCE[0]})/../ >/dev/null 2>&1 && pwd)
+if [ ! -d "$LOCAL_VOLUME_MOUNT" ]; then
+    echo "Invalid mount point: $LOCAL_VOLUME_MOUNT"
+    echo "Usage:" $0 /path/to/local/volume/mount
+    exit 1;
+fi
+
+cd ${BASE}/buildroot/work
+make menuconfig
+cp .config ${LOCAL_VOLUME_MOUNT}/cartesi-config

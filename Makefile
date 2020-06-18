@@ -35,7 +35,7 @@ submodules:
 	git submodule update --init --recursive
 
 $(HTIF_BIN):
-	$(MAKE) -C tools/linux/htif
+	$(MAKE) -C tools/linux/htif TOOLCHAIN_TAG=$(TOOLCHAIN_TAG)
 
 build-htif: $(HTIF_BIN)
 
@@ -66,6 +66,9 @@ run-as-root:
 		-v `pwd`:$(CONTAINER_BASE) \
 		-w $(CONTAINER_BASE) \
 		$(IMG) $(CONTAINER_COMMAND)
+
+config: CONTAINER_COMMAND := $(CONTAINER_BASE)/scripts/update-buildroot-config
+config: run-as-root
 
 copy: build
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID
