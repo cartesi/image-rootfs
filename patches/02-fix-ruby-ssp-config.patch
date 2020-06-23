@@ -1,0 +1,13 @@
+--- buildroot/package/ruby/ruby.mk.old	2020-06-23 03:20:47.746484000 +0000
++++ buildroot/package/ruby/ruby.mk	2020-06-23 03:21:15.438761000 +0000
+@@ -44,6 +44,10 @@
+ RUBY_CONF_ENV += stack_protector=no
+ endif
+ 
++ifeq ($(BR2_SSP_NONE),y)
++RUBY_CONF_ENV += stack_protector=no
++endif
++
+ # Force optionals to build before we do
+ ifeq ($(BR2_PACKAGE_BERKELEYDB),y)
+ RUBY_DEPENDENCIES += berkeleydb
