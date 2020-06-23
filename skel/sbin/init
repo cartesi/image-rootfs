@@ -19,6 +19,12 @@ DEFAULT_ENV_FILE="/etc/environment"
 mount /proc
 mount /sys
 
+random_seed=/var/run/random-seed
+if [ -f $random_seed ]; then
+    cat $random_seed | rndaddentropy
+    chmod 600 $random_seed
+fi
+
 for dev in /dev/mtdblock[1-7]; do
     if [ -b $dev -a "$(blkid -s TYPE -o value $dev)" = "ext2" ]; then
         mtdblock=`basename $dev`

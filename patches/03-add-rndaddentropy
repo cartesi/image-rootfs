@@ -1,0 +1,50 @@
+diff -Naur a/package/Config.in b/package/Config.in
+--- a/package/Config.in	2020-06-23 05:22:00.753337000 +0000
++++ b/package/Config.in	2020-06-23 05:03:33.967430000 +0000
+@@ -2372,6 +2372,7 @@
+ 	source "package/quota/Config.in"
+ 	source "package/quotatool/Config.in"
+ 	source "package/rauc/Config.in"
++	source "package/rndaddentropy/Config.in"
+ 	source "package/rsyslog/Config.in"
+ 	source "package/runc/Config.in"
+ 	source "package/s6/Config.in"
+diff -Naur a/package/rndaddentropy/Config.in b/package/rndaddentropy/Config.in
+--- a/package/rndaddentropy/Config.in	1970-01-01 00:00:00.000000000 +0000
++++ b/package/rndaddentropy/Config.in	2020-06-23 05:06:53.707759000 +0000
+@@ -0,0 +1,6 @@
++config BR2_PACKAGE_RNDADDENTROPY
++	bool "rndaddentropy"
++	help
++	  RNDADDENTROPY ioctl wrapper
++
++	  https://www.finnie.org/software/twuewand/
+diff -Naur a/package/rndaddentropy/rndaddentropy.mk b/package/rndaddentropy/rndaddentropy.mk
+--- a/package/rndaddentropy/rndaddentropy.mk	1970-01-01 00:00:00.000000000 +0000
++++ b/package/rndaddentropy/rndaddentropy.mk	2020-06-23 05:15:55.081185000 +0000
+@@ -0,0 +1,20 @@
++################################################################################
++#
++# rndaddentropy
++#
++################################################################################
++
++RNDADDENTROPY_VERSION = 3.0.0
++RNDADDENTROPY_SOURCE = twuewand-$(RNDADDENTROPY_VERSION).tar.gz
++RNDADDENTROPY_SITE = https://www.finnie.org/software/twuewand
++RNDADDENTROPY_LICENSE = GPL-2+
++
++define RNDADDENTROPY_BUILD_CMDS
++    $(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(@D)/rndaddentropy all
++endef
++
++define RNDADDENTROPY_INSTALL_TARGET_CMDS
++    $(INSTALL) -D -m 0755 $(@D)/rndaddentropy/rndaddentropy $(TARGET_DIR)/sbin
++endef
++
++$(eval $(generic-package))
+diff -Naur a/package/rndaddentropy/rndaddentropy.hash b/package/rndaddentropy/rndaddentropy.hash
+--- a/package/rndaddentropy/rndaddentropy.hash	1970-01-01 00:00:00.000000000 +0000
++++ b/package/rndaddentropy/rndaddentropy.hash	2020-06-23 05:15:55.081185000 +0000
+@@ -0,0 +1,1 @@
++sha1  a570c2cf1ef7219765d60549cb3472031a24bf51  twuewand-3.0.0.tar.gz
