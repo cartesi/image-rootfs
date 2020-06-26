@@ -35,7 +35,7 @@ COPY skel $BASE/buildroot/skel
 COPY cartesi-config $BASE/buildroot
 COPY cartesi-busybox-fragment $BASE/buildroot
 COPY patches $BASE/buildroot/patches
-COPY tools/linux/htif/extra $BASE/buildroot/skel/opt/cartesi/bin
+COPY tools/linux/htif/yield $BASE/buildroot/skel/opt/cartesi/bin/
 COPY tools/linux/utils $BASE/buildroot/skel/opt/cartesi/bin
 
 # Never use -jN with buildroot
