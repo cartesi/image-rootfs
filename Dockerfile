@@ -20,6 +20,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ENV OLDPATH=$PATH
 
+ENV BUILD_BASE=$BASE/rootfs
+
 # Build rootfs with ABI lp64 and ISA rv64ima
 # ----------------------------------------------------
 ENV ARCH "rv64ima"
@@ -28,28 +30,32 @@ ENV RISCV "$BASE/riscv64-unknown-linux-gnu"
 ENV PATH "$RISCV/bin:${OLDPATH}"
 
 RUN \
+    mkdir -p $BUILD_BASE/artifacts
+
+RUN \
+    cd $BUILD_BASE && \
     git clone --branch 2020.05 --depth 1 \
         https://github.com/buildroot/buildroot.git
 
-COPY skel $BASE/buildroot/skel
-COPY cartesi-config $BASE/buildroot
-COPY cartesi-busybox-fragment $BASE/buildroot
-COPY patches $BASE/buildroot/patches
-COPY tools/linux/htif/yield $BASE/buildroot/skel/opt/cartesi/bin/
-COPY tools/linux/utils $BASE/buildroot/skel/opt/cartesi/bin
+COPY skel $BUILD_BASE/buildroot/skel
+COPY cartesi-buildroot-config $BUILD_BASE/buildroot
+COPY cartesi-busybox-fragment $BUILD_BASE/buildroot
+COPY patches $BUILD_BASE/buildroot/patches
+COPY tools/linux/htif/yield $BUILD_BASE/buildroot/skel/opt/cartesi/bin/
+COPY tools/linux/utils $BUILD_BASE/buildroot/skel/opt/cartesi/bin
 
 # Never use -jN with buildroot
 RUN \
-    chmod +x $BASE/buildroot/skel/opt/cartesi/bin/* && \
-    mkdir -p $BASE/buildroot/work && \
-    cd $BASE/buildroot && \
+    chmod +x $BUILD_BASE/buildroot/skel/opt/cartesi/bin/* && \
+    mkdir -p $BUILD_BASE/buildroot/work && \
+    cd $BUILD_BASE/buildroot && \
     git pull && \
     git apply patches/* && \
-    cp cartesi-config work/.config && \
+    cp cartesi-buildroot-config work/.config && \
     make O=work olddefconfig && \
     make -C work && \
-    cp work/images/rootfs.ext2 $BASE && \
-    truncate -s %4096 $BASE/rootfs.ext2
+    cp work/images/rootfs.ext2 $BUILD_BASE/artifacts && \
+    truncate -s %4096 $BUILD_BASE/artifacts/rootfs.ext2
 
 USER root
 

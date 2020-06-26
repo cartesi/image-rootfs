@@ -14,15 +14,17 @@
 .PHONY: build push run share
 
 TAG ?= devel
-TOOLCHAIN_TAG ?= 0.2.0
+TOOLCHAIN_TAG ?= 0.3.0
 NEW_TAG ?= latest
+BUILDROOT_CONFIG ?= configs/default-buildroot-config
+BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 
 CONTAINER_BASE := /opt/cartesi/rootfs
 
 IMG_REPO:=cartesi/rootfs
 IMG:=$(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
-ART:=$(BASE)/rootfs.ext2
+ART:=$(BASE)/rootfs/artifacts/rootfs.ext2
 YIELD_BIN:=tools/linux/htif/yield
 
 ifneq ($(TOOLCHAIN_TAG),)
@@ -39,11 +41,7 @@ $(YIELD_BIN):
 
 yield: $(YIELD_BIN)
 
-clean:
-	$(MAKE) -C tools/linux/htif TOOLCHAIN_TAG=$(TOOLCHAIN_TAG) clean
-	rm -f rootfs.ext2
-
-build: $(YIELD_BIN)
+build: $(YIELD_BIN) cartesi-buildroot-config cartesi-busybox-fragment
 	docker build -t $(IMG) $(BUILD_ARGS) .
 
 push:
@@ -69,7 +67,20 @@ run-as-root:
 		$(IMG) $(CONTAINER_COMMAND)
 
 config: CONTAINER_COMMAND := $(CONTAINER_BASE)/scripts/update-buildroot-config
-config: run-as-root
+config: cartesi-buildroot-config cartesi-busybox-fragment run-as-root
+
+cartesi-buildroot-config:
+	cp $(BUILDROOT_CONFIG) ./cartesi-buildroot-config
+
+cartesi-busybox-fragment:
+	cp $(BUSYBOX_CONFIG) ./cartesi-busybox-fragment
+
+clean-config:
+	rm -f ./cartesi-buildroot-config ./cartesi-busybox-fragment
+
+clean: clean-config
+	$(MAKE) -C tools/linux/htif TOOLCHAIN_TAG=$(TOOLCHAIN_TAG) clean
+	rm -f rootfs.ext2
 
 copy: build
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID

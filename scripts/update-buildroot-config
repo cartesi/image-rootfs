@@ -8,6 +8,22 @@ if [ ! -d "$LOCAL_VOLUME_MOUNT" ]; then
     exit 1;
 fi
 
-cd ${BASE}/buildroot/work
+cd ${BASE}/rootfs/buildroot/work
 make menuconfig
-cp .config ${LOCAL_VOLUME_MOUNT}/cartesi-config
+cp .config ${LOCAL_VOLUME_MOUNT}/cartesi-buildroot-config
+
+function build {
+    cd ${BASE}/rootfs/buildroot/work
+    make
+    cp images/rootfs.ext2 ${LOCAL_VOLUME_MOUNT}/
+    truncate -s %4096 ${LOCAL_VOLUME_MOUNT}/rootfs.ext2
+}
+
+while true; do
+    read -p "Do you wish to build it now? " yn
+    case $yn in
+        [Yy]* ) build; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done

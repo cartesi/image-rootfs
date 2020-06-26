@@ -1,3 +1,4 @@
 .git*
+configs
 rootfs.ext2
 README.md
