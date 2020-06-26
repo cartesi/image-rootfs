@@ -1,0 +1,41 @@
+diff -Naur a/package/Config.in b/package/Config.in
+--- a/package/Config.in	2020-06-26 00:08:16.375457000 +0000
++++ b/package/Config.in	2020-06-26 00:03:45.411491000 +0000
+@@ -192,6 +192,7 @@
+ 	source "package/cramfs/Config.in"
+ 	source "package/curlftpfs/Config.in"
+ 	source "package/davfs2/Config.in"
++	source "package/devio/Config.in"
+ 	source "package/dosfstools/Config.in"
+ 	source "package/e2fsprogs/Config.in"
+ 	source "package/e2tools/Config.in"
+diff -Naur a/package/devio/Config.in b/package/devio/Config.in
+--- a/package/devio/Config.in	1970-01-01 00:00:00.000000000 +0000
++++ b/package/devio/Config.in	2020-06-25 23:54:39.618681000 +0000
+@@ -0,0 +1,6 @@
++config BR2_PACKAGE_DEVIO
++	bool "devio"
++	help
++	  block device read and write
++
++	  http://devio.sourceforge.net/
+diff -Naur a/package/devio/devio.hash b/package/devio/devio.hash
+--- a/package/devio/devio.hash	1970-01-01 00:00:00.000000000 +0000
++++ b/package/devio/devio.hash	2020-06-25 23:55:13.773806000 +0000
+@@ -0,0 +1 @@
++sha1  d8a9ed6817a625fd5d4089257a5b4d83f8e380c3  devio-1.2.tar.gz
+diff -Naur a/package/devio/devio.mk b/package/devio/devio.mk
+--- a/package/devio/devio.mk	1970-01-01 00:00:00.000000000 +0000
++++ b/package/devio/devio.mk	2020-06-25 23:53:20.150522000 +0000
+@@ -0,0 +1,11 @@
++################################################################################
++#
++# devio
++#
++################################################################################
++
++DEVIO_VERSION = 1.2
++DEVIO_SOURCE = devio-$(DEVIO_VERSION).tar.gz
++DEVIO_SITE = https://downloads.sourceforge.net/project/devio/devio/devio-$(DEVIO_VERSION)
++
++$(eval $(autotools-package))
