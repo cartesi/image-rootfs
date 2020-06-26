@@ -1,0 +1,19 @@
+diff --git a/package/cpio/01-remove-declaration-of-program_name.patch b/package/cpio/01-remove-declaration-of-program_name.patch
+new file mode 100644
+index 0000000..4d82f50
+--- /dev/null 
++++ b/package/cpio/01-remove-declaration-of-program_name.patch
+@@ -0,0 +1,13 @@
++diff -Nru cpio-2.13.orig/src/global.c cpio-2.13.new/src/global.c
++--- cpio-2.13.orig/src/global.c	2019-11-03 15:07:23.000000000 +0000
+++++ cpio-2.13.new/src/global.c	2020-06-26 03:06:40.567557184 +0000
++@@ -184,9 +184,6 @@
++ /* Extract to standard output? */
++ bool to_stdout_option = false;
++ 
++-/* The name this program was run with.  */
++-char *program_name;
++-
++ /* A pointer to either lstat or stat, depending on whether
++    dereferencing of symlinks is done for input files.  */
++ int (*xstat) ();
