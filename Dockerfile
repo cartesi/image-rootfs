@@ -33,6 +33,12 @@ RUN \
     mkdir -p $BUILD_BASE/artifacts
 
 RUN \
+    chown -R developer:developer $BUILD_BASE && \
+    chmod o+w $BUILD_BASE
+
+USER developer
+
+RUN \
     cd $BUILD_BASE && \
     git clone --branch 2020.05 --depth 1 \
         https://github.com/buildroot/buildroot.git
@@ -46,7 +52,6 @@ COPY tools/linux/utils $BUILD_BASE/buildroot/skel/opt/cartesi/bin
 
 # Never use -jN with buildroot
 RUN \
-    chmod +x $BUILD_BASE/buildroot/skel/opt/cartesi/bin/* && \
     mkdir -p $BUILD_BASE/buildroot/work && \
     cd $BUILD_BASE/buildroot && \
     git pull && \
