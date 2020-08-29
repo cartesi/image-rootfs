@@ -1,0 +1,173 @@
+diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/01-compile-11-with-riscv64.patch buildroot/package/openjdk/01-compile-11-with-riscv64.patch
+--- /opt/cartesi/rootfs/buildroot-old/package/openjdk/01-compile-11-with-riscv64.patch	1970-01-01 00:00:00.000000000 +0000
++++ buildroot/package/openjdk/01-compile-11-with-riscv64.patch	2020-08-29 03:08:35.693685046 +0000
+@@ -0,0 +1,135 @@
++diff -Naur openjdk-11.0.7+10.old/make/autoconf/platform.m4 openjdk-11.0.7+10/make/autoconf/platform.m4
++--- openjdk-11.0.7+10.old/make/autoconf/platform.m4	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/make/autoconf/platform.m4	2020-08-29 02:13:13.378495735 +0000
++@@ -150,6 +150,12 @@
++       VAR_CPU_BITS=64
++       VAR_CPU_ENDIAN=big
++       ;;
+++    riscv64)
+++      VAR_CPU=riscv64
+++      VAR_CPU_ARCH=riscv64
+++      VAR_CPU_BITS=64
+++      VAR_CPU_ENDIAN=little
+++      ;;
++     *)
++       AC_MSG_ERROR([unsupported cpu $1])
++       ;;
++diff -Naur openjdk-11.0.7+10.old/src/hotspot/os/linux/os_linux.cpp openjdk-11.0.7+10/src/hotspot/os/linux/os_linux.cpp
++--- openjdk-11.0.7+10.old/src/hotspot/os/linux/os_linux.cpp	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/hotspot/os/linux/os_linux.cpp	2020-08-29 02:20:33.989935293 +0000
++@@ -1818,6 +1818,9 @@
++ #ifndef EM_AARCH64
++   #define EM_AARCH64    183               /* ARM AARCH64 */
++ #endif
+++#ifndef EM_RISCV
+++  #define EM_RISCV      243               /* RISCV */
+++#endif
++ 
++   static const arch_t arch_array[]={
++     {EM_386,         EM_386,     ELFCLASS32, ELFDATA2LSB, (char*)"IA 32"},
++@@ -1843,6 +1846,7 @@
++     {EM_PARISC,      EM_PARISC,  ELFCLASS32, ELFDATA2MSB, (char*)"PARISC"},
++     {EM_68K,         EM_68K,     ELFCLASS32, ELFDATA2MSB, (char*)"M68k"},
++     {EM_AARCH64,     EM_AARCH64, ELFCLASS64, ELFDATA2LSB, (char*)"AARCH64"},
+++    {EM_RISCV,       EM_RISCV, ELFCLASS64,   ELFDATA2LSB, (char*)"RISCV"},
++   };
++ 
++ #if  (defined IA32)
++@@ -1877,9 +1881,11 @@
++   static  Elf32_Half running_arch_code=EM_68K;
++ #elif  (defined SH)
++   static  Elf32_Half running_arch_code=EM_SH;
+++#elif  (defined __riscv)
+++  static  Elf32_Half running_arch_code=EM_RISCV;
++ #else
++     #error Method os::dll_load requires that one of following is defined:\
++-        AARCH64, ALPHA, ARM, AMD64, IA32, IA64, M68K, MIPS, MIPSEL, PARISC, __powerpc__, __powerpc64__, S390, SH, __sparc
+++        AARCH64, ALPHA, ARM, AMD64, IA32, IA64, M68K, MIPS, MIPSEL, PARISC, __powerpc__, __powerpc64__, S390, SH, __sparc, __riscv
++ #endif
++ 
++   // Identify compatability class for VM's architecture and library's architecture
++diff -Naur openjdk-11.0.7+10.old/src/java.base/unix/native/libjava/childproc.c openjdk-11.0.7+10/src/java.base/unix/native/libjava/childproc.c
++--- openjdk-11.0.7+10.old/src/java.base/unix/native/libjava/childproc.c	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/java.base/unix/native/libjava/childproc.c	2020-08-29 02:25:02.290521398 +0000
++@@ -33,6 +33,7 @@
++ 
++ #include "childproc.h"
++ 
+++const char * const *parentPathv = NULL;
++ 
++ ssize_t
++ restartableWrite(int fd, const void *buf, size_t count)
++diff -Naur openjdk-11.0.7+10.old/src/java.base/unix/native/libjava/childproc.h openjdk-11.0.7+10/src/java.base/unix/native/libjava/childproc.h
++--- openjdk-11.0.7+10.old/src/java.base/unix/native/libjava/childproc.h	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/java.base/unix/native/libjava/childproc.h	2020-08-29 02:24:51.624522137 +0000
++@@ -118,7 +118,7 @@
++  * The cached and split version of the JDK's effective PATH.
++  * (We don't support putenv("PATH=...") in native code)
++  */
++-const char * const *parentPathv;
+++extern const char * const *parentPathv;
++ 
++ ssize_t restartableWrite(int fd, const void *buf, size_t count);
++ int restartableDup2(int fd_from, int fd_to);
++diff -Naur openjdk-11.0.7+10.old/src/java.security.jgss/share/native/libj2gss/NativeFunc.c openjdk-11.0.7+10/src/java.security.jgss/share/native/libj2gss/NativeFunc.c
++--- openjdk-11.0.7+10.old/src/java.security.jgss/share/native/libj2gss/NativeFunc.c	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/java.security.jgss/share/native/libj2gss/NativeFunc.c	2020-08-29 02:28:07.151085053 +0000
++@@ -27,6 +27,8 @@
++ #include <stdlib.h>
++ #include "NativeFunc.h"
++ 
+++GSS_FUNCTION_TABLE_PTR ftab = NULL;
+++
++ /* standard GSS method names (ordering is from mapfile) */
++ static const char RELEASE_NAME[]                = "gss_release_name";
++ static const char IMPORT_NAME[]                 = "gss_import_name";
++diff -Naur openjdk-11.0.7+10.old/src/java.security.jgss/share/native/libj2gss/NativeFunc.h openjdk-11.0.7+10/src/java.security.jgss/share/native/libj2gss/NativeFunc.h
++--- openjdk-11.0.7+10.old/src/java.security.jgss/share/native/libj2gss/NativeFunc.h	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/java.security.jgss/share/native/libj2gss/NativeFunc.h	2020-08-29 02:27:55.331085872 +0000
++@@ -277,6 +277,6 @@
++ typedef GSS_FUNCTION_TABLE *GSS_FUNCTION_TABLE_PTR;
++ 
++ /* global GSS function table */
++-GSS_FUNCTION_TABLE_PTR ftab;
+++extern GSS_FUNCTION_TABLE_PTR ftab;
++ 
++ #endif
++diff -Naur openjdk-11.0.7+10.old/src/jdk.sctp/unix/native/libsctp/Sctp.h openjdk-11.0.7+10/src/jdk.sctp/unix/native/libsctp/Sctp.h
++--- openjdk-11.0.7+10.old/src/jdk.sctp/unix/native/libsctp/Sctp.h	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/jdk.sctp/unix/native/libsctp/Sctp.h	2020-08-29 02:29:43.254013704 +0000
++@@ -322,12 +322,12 @@
++ 
++ #endif /* __linux__ */
++ 
++-sctp_getladdrs_func* nio_sctp_getladdrs;
++-sctp_freeladdrs_func* nio_sctp_freeladdrs;
++-sctp_getpaddrs_func* nio_sctp_getpaddrs;
++-sctp_freepaddrs_func* nio_sctp_freepaddrs;
++-sctp_bindx_func* nio_sctp_bindx;
++-sctp_peeloff_func* nio_sctp_peeloff;
+++extern sctp_getladdrs_func* nio_sctp_getladdrs;
+++extern sctp_freeladdrs_func* nio_sctp_freeladdrs;
+++extern sctp_getpaddrs_func* nio_sctp_getpaddrs;
+++extern sctp_freepaddrs_func* nio_sctp_freepaddrs;
+++extern sctp_bindx_func* nio_sctp_bindx;
+++extern sctp_peeloff_func* nio_sctp_peeloff;
++ 
++ jboolean loadSocketExtensionFuncs(JNIEnv* env);
++ 
++diff -Naur openjdk-11.0.7+10.old/src/jdk.sctp/unix/native/libsctp/SctpNet.c openjdk-11.0.7+10/src/jdk.sctp/unix/native/libsctp/SctpNet.c
++--- openjdk-11.0.7+10.old/src/jdk.sctp/unix/native/libsctp/SctpNet.c	2020-01-30 10:08:30.000000000 +0000
+++++ openjdk-11.0.7+10/src/jdk.sctp/unix/native/libsctp/SctpNet.c	2020-08-29 02:30:02.620012362 +0000
++@@ -37,6 +37,13 @@
++ #include "sun_nio_ch_sctp_SctpNet.h"
++ #include "sun_nio_ch_sctp_SctpStdSocketOption.h"
++ 
+++sctp_getladdrs_func* nio_sctp_getladdrs = NULL;
+++sctp_freeladdrs_func* nio_sctp_freeladdrs = NULL;
+++sctp_getpaddrs_func* nio_sctp_getpaddrs = NULL;
+++sctp_freepaddrs_func* nio_sctp_freepaddrs = NULL;
+++sctp_bindx_func* nio_sctp_bindx = NULL;
+++sctp_peeloff_func* nio_sctp_peeloff = NULL;
+++
++ static jclass isaCls = 0;
++ static jmethodID isaCtrID = 0;
++ 
+diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/Config.in buildroot/package/openjdk/Config.in
+--- /opt/cartesi/rootfs/buildroot-old/package/openjdk/Config.in	2020-07-03 21:32:41.000000000 +0000
++++ buildroot/package/openjdk/Config.in	2020-08-29 01:42:43.535861811 +0000
+@@ -9,6 +9,7 @@
+ 	default y if BR2_arm
+ 	default y if BR2_i386 || BR2_x86_64
+ 	default y if BR2_m68k
++	default y if BR2_riscv
+ 	default y if BR2_powerpc || BR2_powerpc64 || BR2_powerpc64le
+ 	default y if BR2_sh
+ 
+@@ -118,8 +119,8 @@
+ 
+ choice
+ 	prompt "openjdk variant"
+-	default BR2_PACKAGE_OPENJDK_JVM_VARIANT_SERVER if !BR2_powerpc
+-	default BR2_PACKAGE_OPENJDK_JVM_VARIANT_ZERO if BR2_powerpc
++	default BR2_PACKAGE_OPENJDK_JVM_VARIANT_SERVER if !BR2_powerpc && !BR2_riscv
++	default BR2_PACKAGE_OPENJDK_JVM_VARIANT_ZERO if BR2_powerpc || BR2_riscv
+ 
+ config BR2_PACKAGE_OPENJDK_JVM_VARIANT_CLIENT
+ 	bool "client"
+diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/openjdk.mk buildroot/package/openjdk/openjdk.mk
+--- /opt/cartesi/rootfs/buildroot-old/package/openjdk/openjdk.mk	2020-07-03 21:32:41.000000000 +0000
++++ buildroot/package/openjdk/openjdk.mk	2020-08-29 02:10:37.984638039 +0000
+@@ -92,7 +92,7 @@
+ 	--enable-headless-only \
+ 	--enable-openjdk-only \
+ 	--enable-unlimited-crypto \
+-	--openjdk-target=$(GNU_TARGET_NAME) \
++	--openjdk-target=$(BR2_TOOLCHAIN_EXTERNAL_PREFIX) \
+ 	--with-boot-jdk=$(HOST_DIR) \
+ 	--with-stdc++lib=dynamic \
+ 	--with-debug-level=release \
