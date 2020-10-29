@@ -14,7 +14,7 @@
 .PHONY: build push run share
 
 TAG ?= devel
-TOOLCHAIN_TAG ?= 0.4.0
+TOOLCHAIN_TAG ?= 0.5.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment

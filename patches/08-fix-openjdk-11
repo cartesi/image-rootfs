@@ -168,6 +168,6 @@ diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/openjdk.mk buildroo
  	--enable-unlimited-crypto \
 -	--openjdk-target=$(GNU_TARGET_NAME) \
 +	--openjdk-target=$(BR2_TOOLCHAIN_EXTERNAL_PREFIX) \
- 	--with-boot-jdk=$(HOST_DIR) \
+ 	--with-boot-jdk=$(HOST_OPENJDK_BIN_ROOT_DIR) \
  	--with-stdc++lib=dynamic \
  	--with-debug-level=release \

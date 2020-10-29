@@ -26,7 +26,7 @@ ENV BUILD_BASE=$BASE/rootfs
 # ----------------------------------------------------
 ENV ARCH "rv64ima"
 ENV ABI "lp64"
-ENV RISCV "$BASE/riscv64-unknown-linux-gnu"
+ENV RISCV "$BASE/riscv64-cartesi-linux-gnu"
 ENV PATH "$RISCV/bin:${OLDPATH}"
 
 RUN \
@@ -40,7 +40,7 @@ USER developer
 
 RUN \
     cd $BUILD_BASE && \
-    git clone --branch 2020.05 --depth 1 \
+    git clone --branch 2020.08.1 --depth 1 \
         https://github.com/buildroot/buildroot.git
 
 COPY skel $BUILD_BASE/buildroot/skel
