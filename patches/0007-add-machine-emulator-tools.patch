@@ -1,0 +1,130 @@
+diff --git a/package/Config.in b/package/Config.in
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -2424,6 +2427,7 @@ menu "System tools"
+ 	source "package/xdg-dbus-proxy/Config.in"
+ 	source "package/xen/Config.in"
+ 	source "package/xvisor/Config.in"
++	source "package/machine-emulator-tools/Config.in"
+ endmenu
+ 
+ menu "Text editors and viewers"
+diff --git a/package/machine-emulator-tools/Config.in b/package/machine-emulator-tools/Config.in
+new file mode 100644
+--- /dev/null
++++ b/package/machine-emulator-tools/Config.in
+@@ -0,0 +1,35 @@
++menuconfig BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
++	bool "Cartesi machine-emulator-tools"
++	help
++	  Various useful Cartesi machine libraries and utilities.
++
++	  Things like yield, flashdrive, readbe64, writebe64, etc...
++
++	  https://github.com/cartesi/machine-emulator-tools/
++
++if BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_YIELD
++	bool "yield"
++	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
++	help
++	  Install yield command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_FLASHDRIVE
++	bool "flashdrive"
++	help
++	  Install flashdrive command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_READBE64
++	bool "readbe64"
++	depends on BR2_PACKAGE_LUA_5_3
++	help
++	  Install readbe64 command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_WRITEBE64
++	bool "writebe64"
++	depends on BR2_PACKAGE_LUA_5_3
++	help
++	  Install writebe64 command line utility.
++
++endif
+diff --git a/package/machine-emulator-tools/machine-emulator-tools.hash b/package/machine-emulator-tools/machine-emulator-tools.hash
+new file mode 100644
+--- /dev/null
++++ b/package/machine-emulator-tools/machine-emulator-tools.hash
+@@ -0,0 +1 @@
++sha256  11d50c4cffe8e1191ca0427e3fde62a79dc8df93cce2048312690d7c484f7111  v0.2.0.tar.gz
+diff --git a/package/machine-emulator-tools/machine-emulator-tools.mk b/package/machine-emulator-tools/machine-emulator-tools.mk
+new file mode 100644
+--- /dev/null
++++ b/package/machine-emulator-tools/machine-emulator-tools.mk
+@@ -0,0 +1,54 @@
++################################################################################
++#
++# machine-emulator-tools
++#
++################################################################################
++
++MACHINE_EMULATOR_TOOLS_VERSION = v0.2.0
++MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
++MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
++MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
++MACHINE_EMULATOR_TOOLS_LICENSE_FILES = LICENSE
++MACHINE_EMULATOR_TOOLS_INSTALL_STAGING = NO
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_YIELD),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_YIELD
++    $(MAKE) RVCC=$(TARGET_CC) -C $(@D)/linux/htif yield.toolchain
++endef
++define INSTALL_MACHINE_EMULATOR_TOOLS_YIELD
++    $(INSTALL) -D -m 0755 $(@D)/linux/htif/yield $(TARGET_DIR)/opt/cartesi/bin/yield
++endef
++endif
++
++MACHINE_EMULATOR_TOOLS_UTILS =
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_FLASHDRIVE),y)
++MACHINE_EMULATOR_TOOLS_UTILS += flashdrive
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_READBE64),y)
++MACHINE_EMULATOR_TOOLS_UTILS += readbe64 
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_WRITEBE64),y)
++MACHINE_EMULATOR_TOOLS_UTILS += writebe64
++endif
++
++ifneq ($(MACHINE_EMULATOR_TOOLS_UTILS),)
++define INSTALL_MACHINE_EMULATOR_UTILS
++    for f in $(MACHINE_EMULATOR_TOOLS_UTILS); do \
++        $(INSTALL) -D -m 0755 $(@D)/linux/utils/$$f $(TARGET_DIR)/opt/cartesi/bin/$$f ; \
++    done
++endef
++endif
++
++define MACHINE_EMULATOR_TOOLS_BUILD_CMDS
++    $(BUILD_MACHINE_EMULATOR_TOOLS_YIELD)
++endef
++
++define MACHINE_EMULATOR_TOOLS_INSTALL_TARGET_CMDS
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_YIELD)
++    $(INSTALL_MACHINE_EMULATOR_UTILS)
++endef
++
++$(eval $(generic-package))
+diff --git a/toolchain/toolchain-external/toolchain-external-custom/Config.in.options b/toolchain/toolchain-external/toolchain-external-custom/Config.in.options
+--- a/toolchain/toolchain-external/toolchain-external-custom/Config.in.options
++++ b/toolchain/toolchain-external/toolchain-external-custom/Config.in.options
+@@ -323,6 +323,10 @@ endchoice
+ comment "Kernel headers older than 3.13 is not tested by Buildroot. Use at your own risk."
+ 	depends on !BR2_TOOLCHAIN_HEADERS_AT_LEAST_3_13
+ 
++config BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
++	bool "External toolchain has Cartesi kernel headers?"
++	depends on (BR2_riscv && BR2_RISCV_64)
++
+ choice
+ 	prompt "External toolchain C library"
+ 	default BR2_TOOLCHAIN_EXTERNAL_CUSTOM_UCLIBC

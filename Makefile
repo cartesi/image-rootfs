@@ -25,7 +25,6 @@ IMG_REPO:=cartesi/rootfs
 IMG:=$(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
 ART:=$(BASE)/rootfs/artifacts/rootfs.ext2
-YIELD_BIN:=tools/linux/htif/yield
 
 ifneq ($(TOOLCHAIN_TAG),)
 BUILD_ARGS := --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
@@ -33,15 +32,7 @@ endif
 
 all: copy
 
-submodules:
-	git submodule update --init --recursive
-
-$(YIELD_BIN):
-	$(MAKE) -C tools/linux/htif TOOLCHAIN_TAG=$(TOOLCHAIN_TAG)
-
-yield: $(YIELD_BIN)
-
-build: $(YIELD_BIN) cartesi-buildroot-config cartesi-busybox-fragment
+build: cartesi-buildroot-config cartesi-busybox-fragment
 	docker build -t $(IMG) $(BUILD_ARGS) .
 
 push:
@@ -79,7 +70,6 @@ clean-config:
 	rm -f ./cartesi-buildroot-config ./cartesi-busybox-fragment
 
 clean: clean-config
-	$(MAKE) -C tools/linux/htif TOOLCHAIN_TAG=$(TOOLCHAIN_TAG) clean
 	rm -f rootfs.ext2
 
 copy: build
