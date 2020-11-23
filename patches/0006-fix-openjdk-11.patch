@@ -1,6 +1,8 @@
-diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/01-compile-11-with-riscv64.patch buildroot/package/openjdk/01-compile-11-with-riscv64.patch
---- /opt/cartesi/rootfs/buildroot-old/package/openjdk/01-compile-11-with-riscv64.patch	1970-01-01 00:00:00.000000000 +0000
-+++ buildroot/package/openjdk/01-compile-11-with-riscv64.patch	2020-08-29 03:08:35.693685046 +0000
+diff --git a/package/openjdk/01-compile-11-with-riscv64.patch b/package/openjdk/01-compile-11-with-riscv64.patch
+new file mode 100644
+index 0000000..c121d45
+--- /dev/null
++++ b/package/openjdk/01-compile-11-with-riscv64.patch
 @@ -0,0 +1,135 @@
 +diff -Naur openjdk-11.0.7+10.old/make/autoconf/platform.m4 openjdk-11.0.7+10/make/autoconf/platform.m4
 +--- openjdk-11.0.7+10.old/make/autoconf/platform.m4	2020-01-30 10:08:30.000000000 +0000
@@ -137,10 +139,11 @@ diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/01-compile-11-with-
 + static jclass isaCls = 0;
 + static jmethodID isaCtrID = 0;
 + 
-diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/Config.in buildroot/package/openjdk/Config.in
---- /opt/cartesi/rootfs/buildroot-old/package/openjdk/Config.in	2020-07-03 21:32:41.000000000 +0000
-+++ buildroot/package/openjdk/Config.in	2020-08-29 01:42:43.535861811 +0000
-@@ -9,6 +9,7 @@
+diff --git a/package/openjdk/Config.in b/package/openjdk/Config.in
+index 3b35c72..f0ae16d 100644
+--- a/package/openjdk/Config.in
++++ b/package/openjdk/Config.in
+@@ -9,6 +9,7 @@ config BR2_PACKAGE_OPENJDK_ARCH_SUPPORTS
  	default y if BR2_arm
  	default y if BR2_i386 || BR2_x86_64
  	default y if BR2_m68k
@@ -148,7 +151,7 @@ diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/Config.in buildroot
  	default y if BR2_powerpc || BR2_powerpc64 || BR2_powerpc64le
  	default y if BR2_sh
  
-@@ -118,8 +119,8 @@
+@@ -118,8 +119,8 @@ config BR2_PACKAGE_OPENJDK_FULL_JDK
  
  choice
  	prompt "openjdk variant"
@@ -159,10 +162,11 @@ diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/Config.in buildroot
  
  config BR2_PACKAGE_OPENJDK_JVM_VARIANT_CLIENT
  	bool "client"
-diff -Naur /opt/cartesi/rootfs/buildroot-old/package/openjdk/openjdk.mk buildroot/package/openjdk/openjdk.mk
---- /opt/cartesi/rootfs/buildroot-old/package/openjdk/openjdk.mk	2020-07-03 21:32:41.000000000 +0000
-+++ buildroot/package/openjdk/openjdk.mk	2020-08-29 02:10:37.984638039 +0000
-@@ -92,7 +92,7 @@
+diff --git a/package/openjdk/openjdk.mk b/package/openjdk/openjdk.mk
+index 80e1fc1..f3e473a 100644
+--- a/package/openjdk/openjdk.mk
++++ b/package/openjdk/openjdk.mk
+@@ -93,7 +93,7 @@ OPENJDK_CONF_OPTS = \
  	--enable-headless-only \
  	--enable-openjdk-only \
  	--enable-unlimited-crypto \
