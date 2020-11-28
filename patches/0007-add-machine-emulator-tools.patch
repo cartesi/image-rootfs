@@ -13,13 +13,13 @@ diff --git a/package/machine-emulator-tools/Config.in b/package/machine-emulator
 new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/Config.in
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,41 @@
 +menuconfig BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
 +	bool "Cartesi machine-emulator-tools"
 +	help
 +	  Various useful Cartesi machine libraries and utilities.
 +
-+	  Things like yield, flashdrive, readbe64, writebe64, etc...
++	  Things like yield, dehash, flashdrive, readbe64, writebe64, etc...
 +
 +	  https://github.com/cartesi/machine-emulator-tools/
 +
@@ -30,6 +30,12 @@ new file mode 100644
 +	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
 +	help
 +	  Install yield command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_DEHASH
++	bool "dehash"
++	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
++	help
++	  Install dehash command line utility.
 +
 +config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_FLASHDRIVE
 +	bool "flashdrive"
@@ -54,19 +60,19 @@ new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.hash
 @@ -0,0 +1 @@
-+sha256  11d50c4cffe8e1191ca0427e3fde62a79dc8df93cce2048312690d7c484f7111  v0.2.0.tar.gz
++sha256  ba9f3d3916219ea266d96ba1b01021762f986fdca3277a331912b755dc89f091  v0.3.0.tar.gz
 diff --git a/package/machine-emulator-tools/machine-emulator-tools.mk b/package/machine-emulator-tools/machine-emulator-tools.mk
 new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.mk
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,65 @@
 +################################################################################
 +#
 +# machine-emulator-tools
 +#
 +################################################################################
 +
-+MACHINE_EMULATOR_TOOLS_VERSION = v0.2.0
++MACHINE_EMULATOR_TOOLS_VERSION = v0.3.0
 +MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
 +MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
 +MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
@@ -79,6 +85,15 @@ new file mode 100644
 +endef
 +define INSTALL_MACHINE_EMULATOR_TOOLS_YIELD
 +    $(INSTALL) -D -m 0755 $(@D)/linux/htif/yield $(TARGET_DIR)/opt/cartesi/bin/yield
++endef
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_DEHASH),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_DEHASH
++    $(MAKE) RVCC=$(TARGET_CC) -C $(@D)/linux/dehash dehash.toolchain
++endef
++define INSTALL_MACHINE_EMULATOR_TOOLS_DEHASH
++    $(INSTALL) -D -m 0755 $(@D)/linux/dehash/dehash $(TARGET_DIR)/opt/cartesi/bin/dehash
 +endef
 +endif
 +
@@ -106,10 +121,12 @@ new file mode 100644
 +
 +define MACHINE_EMULATOR_TOOLS_BUILD_CMDS
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_YIELD)
++    $(BUILD_MACHINE_EMULATOR_TOOLS_DEHASH)
 +endef
 +
 +define MACHINE_EMULATOR_TOOLS_INSTALL_TARGET_CMDS
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_YIELD)
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_DEHASH)
 +    $(INSTALL_MACHINE_EMULATOR_UTILS)
 +endef
 +
