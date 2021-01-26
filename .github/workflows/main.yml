@@ -9,8 +9,45 @@ jobs:
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
 
-      - name: Build
-        run: make -j$(nproc)
+      - name: Copy default Buildroot and Busybox config
+        run: make init-config
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Docker meta
+        id: docker_meta
+        uses: crazy-max/ghaction-docker-meta@v1
+        with:
+          images: ${{ secrets.DOCKER_ORGANIZATION }}/rootfs
+          tag-semver: |
+            {{version}}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push docker image
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          builder: ${{ steps.buildx.outputs.name }}
+          platforms: linux/amd64
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          push: ${{ startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/develop') }}
+          load: true
+          build-args: |
+            TOOLCHAIN_VERSION=0.5.0
+
+      - name: Export rootfs.ext2 artifact
+        run: make copy IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | cut -d "," -f 1 | xargs`
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/v')
@@ -20,19 +57,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
 
-      - run: echo ${DOCKER_PASSWORD} | docker login --username ${DOCKER_USERNAME} --password-stdin
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Publish <version> to Docker Hub
-        run: |
-          docker tag cartesi/rootfs:devel cartesi/rootfs:${GITHUB_REF:11}
-          docker push cartesi/rootfs:${GITHUB_REF:11}
-        if: startsWith(github.ref, 'refs/tags/v')
-
-      - name: Publish [latest] to Docker Hub
-        run: |
-          docker tag cartesi/rootfs:devel cartesi/rootfs:latest
-          docker push cartesi/rootfs:latest
-        if: github.ref == 'refs/heads/master'

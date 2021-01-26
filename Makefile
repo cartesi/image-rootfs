@@ -11,7 +11,7 @@
 # the License.
 #
 
-.PHONY: build push run share
+.PHONY: build push run share init-config copy
 
 TAG ?= devel
 TOOLCHAIN_TAG ?= 0.5.0
@@ -21,8 +21,8 @@ BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 
 CONTAINER_BASE := /opt/cartesi/rootfs
 
-IMG_REPO:=cartesi/rootfs
-IMG:=$(IMG_REPO):$(TAG)
+IMG_REPO ?= cartesi/rootfs
+IMG ?= $(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
 ART:=$(BASE)/rootfs/artifacts/rootfs.ext2
 
@@ -30,9 +30,10 @@ ifneq ($(TOOLCHAIN_TAG),)
 BUILD_ARGS := --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
 endif
 
-all: copy
+.NOTPARALLEL: all
+all: build copy
 
-build: cartesi-buildroot-config cartesi-busybox-fragment
+build: init-config
 	docker build -t $(IMG) $(BUILD_ARGS) .
 
 push:
@@ -66,11 +67,13 @@ cartesi-buildroot-config:
 cartesi-busybox-fragment:
 	cp $(BUSYBOX_CONFIG) ./cartesi-busybox-fragment
 
+init-config: cartesi-buildroot-config cartesi-busybox-fragment
+
 clean-config:
 	rm -f ./cartesi-buildroot-config ./cartesi-busybox-fragment
 
 clean: clean-config
 	rm -f rootfs.ext2
 
-copy: build
+copy:
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID
