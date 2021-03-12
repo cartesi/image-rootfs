@@ -9,6 +9,8 @@ if [ ! -d "$LOCAL_VOLUME_MOUNT" ]; then
 fi
 
 cd ${BASE}/rootfs/buildroot/work
+cp ${LOCAL_VOLUME_MOUNT}/cartesi-buildroot-config .config
+cp ${LOCAL_VOLUME_MOUNT}/cartesi-busybox-fragment .
 make menuconfig
 cp .config ${LOCAL_VOLUME_MOUNT}/cartesi-buildroot-config
 
