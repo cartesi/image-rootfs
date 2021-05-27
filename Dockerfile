@@ -22,10 +22,11 @@ ENV OLDPATH=$PATH
 
 ENV BUILD_BASE=$BASE/rootfs
 
-# Build rootfs with ABI lp64 and ISA rv64ima
-# ----------------------------------------------------
-ENV ARCH "rv64ima"
-ENV ABI "lp64"
+ARG RISCV_ARCH=rv64ima
+ARG RISCV_ABI=lp64
+ENV ARCH $RISCV_ARCH
+ENV ABI $RISCV_ABI
+
 ENV RISCV "$BASE/riscv64-cartesi-linux-gnu"
 ENV PATH "$RISCV/bin:${OLDPATH}"
 

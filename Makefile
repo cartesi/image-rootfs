@@ -18,6 +18,14 @@ TOOLCHAIN_TAG ?= 0.5.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
+RISCV_ARCH ?= rv64ima
+RISCV_ABI ?= lp64
+
+ifeq ($(fd_emulation),yes)
+BUILDROOT_CONFIG = configs/lp64d-buildroot-config
+RISCV_ARCH = rv64imafd
+RISCV_ABI = lp64d
+endif
 
 CONTAINER_BASE := /opt/cartesi/rootfs
 
@@ -29,6 +37,9 @@ ART:=$(BASE)/rootfs/artifacts/rootfs.ext2
 ifneq ($(TOOLCHAIN_TAG),)
 BUILD_ARGS := --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
 endif
+
+BUILD_ARGS += --build-arg RISCV_ARCH=$(RISCV_ARCH)
+BUILD_ARGS += --build-arg RISCV_ABI=$(RISCV_ABI)
 
 .NOTPARALLEL: all
 all: build copy
