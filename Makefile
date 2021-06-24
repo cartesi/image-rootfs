@@ -14,6 +14,7 @@
 .PHONY: build push run share init-config copy
 
 TAG ?= devel
+TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
 TOOLCHAIN_TAG ?= 0.6.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
@@ -33,6 +34,10 @@ IMG_REPO ?= cartesi/rootfs
 IMG ?= $(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
 ART:=$(BASE)/rootfs/artifacts/rootfs.ext2
+
+ifneq ($(TOOLCHAIN_DOCKER_REPOSITORY),)
+BUILD_ARGS := --build-arg TOOLCHAIN_REPOSITORY=$(TOOLCHAIN_DOCKER_REPOSITORY)
+endif
 
 ifneq ($(TOOLCHAIN_TAG),)
 BUILD_ARGS := --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
