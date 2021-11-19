@@ -60,7 +60,7 @@ new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.hash
 @@ -0,0 +1 @@
-+sha256  ba9f3d3916219ea266d96ba1b01021762f986fdca3277a331912b755dc89f091  v0.3.0.tar.gz
++sha256  0629108e74b68afdeb6d3c7fd485d26d3f7d8b32b2333e85c74128c02ccc7927  v0.4.0-test7.tar.gz
 diff --git a/package/machine-emulator-tools/machine-emulator-tools.mk b/package/machine-emulator-tools/machine-emulator-tools.mk
 new file mode 100644
 --- /dev/null
@@ -72,7 +72,7 @@ new file mode 100644
 +#
 +################################################################################
 +
-+MACHINE_EMULATOR_TOOLS_VERSION = v0.3.0
++MACHINE_EMULATOR_TOOLS_VERSION = v0.4.0-test7
 +MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
 +MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
 +MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
@@ -85,6 +85,15 @@ new file mode 100644
 +endef
 +define INSTALL_MACHINE_EMULATOR_TOOLS_YIELD
 +    $(INSTALL) -D -m 0755 $(@D)/linux/htif/yield $(TARGET_DIR)/opt/cartesi/bin/yield
++endef
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_ECHO
++    $(MAKE) RVCC=$(TARGET_CC) -C $(@D)/linux/rollup/ioctl-echo-loop ioctl-echo-loop.toolchain
++endef
++define INSTALL_MACHINE_EMULATOR_TOOLS_ECHO
++    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/ioctl-echo-loop/ioctl-echo-loop $(TARGET_DIR)/opt/cartesi/bin/ioctl-echo-loop
 +endef
 +endif
 +
