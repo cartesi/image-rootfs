@@ -13,7 +13,7 @@ diff --git a/package/machine-emulator-tools/Config.in b/package/machine-emulator
 new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/Config.in
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,59 @@
 +menuconfig BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
 +	bool "Cartesi machine-emulator-tools"
 +	help
@@ -31,11 +31,23 @@ new file mode 100644
 +	help
 +	  Install yield command line utility.
 +
-+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO
-+	bool "echo"
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO
++	bool "ioctl-echo-loop"
 +	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
 +	help
-+	  Install echo command line utility.
++	  Install ioctl-echo-loop command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER
++	bool "http-dispatcher"
++	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
++	help
++	  Install http-dispatcher command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
++	bool "echo-dapp"
++	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
++	help
++	  Install echo-dapp web application.
 +
 +config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_DEHASH
 +	bool "dehash"
@@ -66,24 +78,27 @@ new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.hash
 @@ -0,0 +1 @@
-+sha256  0629108e74b68afdeb6d3c7fd485d26d3f7d8b32b2333e85c74128c02ccc7927  v0.4.0-test7.tar.gz
++sha256  af0e46275f6ba4da7bb965437f7e01e744519c432253a0b43e6d400e0d2cc77f  v0.4.0.tar.gz
 diff --git a/package/machine-emulator-tools/machine-emulator-tools.mk b/package/machine-emulator-tools/machine-emulator-tools.mk
 new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.mk
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,101 @@
 +################################################################################
 +#
 +# machine-emulator-tools
 +#
 +################################################################################
 +
-+MACHINE_EMULATOR_TOOLS_VERSION = v0.4.0-test7
++MACHINE_EMULATOR_TOOLS_VERSION = v0.4.0
 +MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
 +MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
 +MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
 +MACHINE_EMULATOR_TOOLS_LICENSE_FILES = LICENSE
 +MACHINE_EMULATOR_TOOLS_INSTALL_STAGING = NO
++
++MACHINE_EMULATOR_TOOLS_CARGO_ENV = CC=$(TARGET_CC) CXX=$(TARGET_CXX) CFLAGS="-march=rv64ima -mabi=lp64"
++MACHINE_EMULATOR_TOOLS_CARGO_OPTS = -Z build-std=std,core,alloc,panic_abort,proc_macro --release
 +
 +ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_YIELD),y)
 +define BUILD_MACHINE_EMULATOR_TOOLS_YIELD
@@ -94,12 +109,30 @@ new file mode 100644
 +endef
 +endif
 +
-+ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO),y)
-+define BUILD_MACHINE_EMULATOR_TOOLS_ECHO
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO
 +    $(MAKE) RVCC=$(TARGET_CC) -C $(@D)/linux/rollup/ioctl-echo-loop ioctl-echo-loop.toolchain
 +endef
-+define INSTALL_MACHINE_EMULATOR_TOOLS_ECHO
++define INSTALL_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO
 +    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/ioctl-echo-loop/ioctl-echo-loop $(TARGET_DIR)/opt/cartesi/bin/ioctl-echo-loop
++endef
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER
++    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo +nightly build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/http-dispatcher/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/http-dispatcher/Cargo.toml
++endef
++define INSTALL_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER
++    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/http-dispatcher/target/riscv64ima-cartesi-linux-gnu/release/http-dispatcher $(TARGET_DIR)/opt/cartesi/bin/http-dispatcher
++endef
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO_DAPP),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
++    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo +nightly build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/echo-dapp/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/echo-dapp/Cargo.toml
++endef
++define INSTALL_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
++    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/echo-dapp/target/riscv64ima-cartesi-linux-gnu/release/echo-dapp $(TARGET_DIR)/opt/cartesi/bin/echo-dapp
 +endef
 +endif
 +
@@ -119,7 +152,7 @@ new file mode 100644
 +endif
 +
 +ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_READBE64),y)
-+MACHINE_EMULATOR_TOOLS_UTILS += readbe64 
++MACHINE_EMULATOR_TOOLS_UTILS += readbe64
 +endif
 +
 +ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_WRITEBE64),y)
@@ -136,13 +169,17 @@ new file mode 100644
 +
 +define MACHINE_EMULATOR_TOOLS_BUILD_CMDS
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_YIELD)
-+    $(BUILD_MACHINE_EMULATOR_TOOLS_ECHO)
++    $(BUILD_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO)
++    $(BUILD_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER)
++    $(BUILD_MACHINE_EMULATOR_TOOLS_ECHO_DAPP)
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_DEHASH)
 +endef
 +
 +define MACHINE_EMULATOR_TOOLS_INSTALL_TARGET_CMDS
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_YIELD)
-+    $(INSTALL_MACHINE_EMULATOR_TOOLS_ECHO)
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO)
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER)
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_ECHO_DAPP)
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_DEHASH)
 +    $(INSTALL_MACHINE_EMULATOR_UTILS)
 +endef
