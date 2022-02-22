@@ -78,7 +78,7 @@ new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.hash
 @@ -0,0 +1 @@
-+sha256  67290036a8ce0a0e02c88c74a13bad0e213ceaaef61b229b04218de2b86b9d09  v0.5.0.tar.gz
++sha256  345fd52170cfdc366f33909f197770b4f89fd9e2d4ff5e978c25f1f617b8187b  v0.5.1.tar.gz
 diff --git a/package/machine-emulator-tools/machine-emulator-tools.mk b/package/machine-emulator-tools/machine-emulator-tools.mk
 new file mode 100644
 --- /dev/null
@@ -90,7 +90,7 @@ new file mode 100644
 +#
 +################################################################################
 +
-+MACHINE_EMULATOR_TOOLS_VERSION = v0.5.0
++MACHINE_EMULATOR_TOOLS_VERSION = v0.5.1
 +MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
 +MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
 +MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
