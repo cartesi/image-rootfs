@@ -14,7 +14,6 @@ The Cartesi Image RootFS is the repository that provides the Docker configuratio
 ### Build
 
 ```bash
-$ make submodules 
 $ make build
 ```
 

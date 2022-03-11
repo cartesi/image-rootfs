@@ -13,7 +13,7 @@ diff --git a/package/machine-emulator-tools/Config.in b/package/machine-emulator
 new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/Config.in
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,65 @@
 +menuconfig BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
 +	bool "Cartesi machine-emulator-tools"
 +	help
@@ -37,11 +37,17 @@ new file mode 100644
 +	help
 +	  Install ioctl-echo-loop command line utility.
 +
-+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER
-+	bool "http-dispatcher"
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP
++	bool "rollup"
 +	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
 +	help
-+	  Install http-dispatcher command line utility.
++	  Install rollup command line utility.
++
++config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
++	bool "rollup-http-server"
++	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
++	help
++	  Install rollup-http-server command line utility.
 +
 +config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
 +	bool "echo-dapp"
@@ -78,19 +84,19 @@ new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.hash
 @@ -0,0 +1 @@
-+sha256  345fd52170cfdc366f33909f197770b4f89fd9e2d4ff5e978c25f1f617b8187b  v0.5.1.tar.gz
++sha256  22200aac1b2ebf6edd59f4418e402f0f48142716e7eb6797255e4142a8eb6790  v0.6.0.tar.gz
 diff --git a/package/machine-emulator-tools/machine-emulator-tools.mk b/package/machine-emulator-tools/machine-emulator-tools.mk
 new file mode 100644
 --- /dev/null
 +++ b/package/machine-emulator-tools/machine-emulator-tools.mk
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,113 @@
 +################################################################################
 +#
 +# machine-emulator-tools
 +#
 +################################################################################
 +
-+MACHINE_EMULATOR_TOOLS_VERSION = v0.5.1
++MACHINE_EMULATOR_TOOLS_VERSION = v0.6.0
 +MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
 +MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
 +MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
@@ -118,12 +124,22 @@ new file mode 100644
 +endef
 +endif
 +
-+ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER),y)
-+define BUILD_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER
-+    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo +nightly build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/http-dispatcher/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/http-dispatcher/Cargo.toml
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_ROLLUP
++    $(MAKE) RVCC=$(TARGET_CC) -C $(@D)/linux/rollup/rollup rollup.toolchain
 +endef
-+define INSTALL_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER
-+    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/http-dispatcher/target/riscv64ima-cartesi-linux-gnu/release/http-dispatcher $(TARGET_DIR)/opt/cartesi/bin/http-dispatcher
++define INSTALL_MACHINE_EMULATOR_TOOLS_ROLLUP
++    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/rollup/rollup $(TARGET_DIR)/opt/cartesi/bin/rollup
++endef
++endif
++
++ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER),y)
++define BUILD_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
++    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo +nightly build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/rollup-http-server/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/rollup-http-server/Cargo.toml
++endef
++define INSTALL_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
++    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/rollup-http-server/target/riscv64ima-cartesi-linux-gnu/release/rollup-http-server $(TARGET_DIR)/opt/cartesi/bin/rollup-http-server
++    $(INSTALL) -D -m 0755 $(@D)/linux/utils/rollup-init $(TARGET_DIR)/opt/cartesi/bin/rollup-init
 +endef
 +endif
 +
@@ -170,7 +186,8 @@ new file mode 100644
 +define MACHINE_EMULATOR_TOOLS_BUILD_CMDS
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_YIELD)
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO)
-+    $(BUILD_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER)
++    $(BUILD_MACHINE_EMULATOR_TOOLS_ROLLUP)
++    $(BUILD_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER)
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_ECHO_DAPP)
 +    $(BUILD_MACHINE_EMULATOR_TOOLS_DEHASH)
 +endef
@@ -178,7 +195,8 @@ new file mode 100644
 +define MACHINE_EMULATOR_TOOLS_INSTALL_TARGET_CMDS
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_YIELD)
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO)
-+    $(INSTALL_MACHINE_EMULATOR_TOOLS_HTTP_DISPATCHER)
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_ROLLUP)
++    $(INSTALL_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER)
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_ECHO_DAPP)
 +    $(INSTALL_MACHINE_EMULATOR_TOOLS_DEHASH)
 +    $(INSTALL_MACHINE_EMULATOR_UTILS)

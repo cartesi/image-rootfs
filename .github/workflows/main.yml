@@ -47,7 +47,7 @@ jobs:
           load: true
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.7.0
+            TOOLCHAIN_VERSION=0.9.0
 
       - name: Export rootfs.ext2 artifact
         run: make copy IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | head -1 | cut -d "," -f 1 | xargs`
@@ -73,7 +73,7 @@ jobs:
           load: false
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.7.0
+            TOOLCHAIN_VERSION=0.9.0
 
   build-fd-emulation:
     runs-on: ubuntu-20.04
@@ -126,7 +126,7 @@ jobs:
           load: true
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.7.0-fd-emulation
+            TOOLCHAIN_VERSION=0.9.0-fd-emulation
             RISCV_ARCH=rv64imafd
             RISCV_ABI=lp64d
 
@@ -161,7 +161,7 @@ jobs:
           load: false
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.7.0-fd-emulation
+            TOOLCHAIN_VERSION=0.9.0-fd-emulation
             RISCV_ARCH=rv64imafd
             RISCV_ABI=lp64d
 

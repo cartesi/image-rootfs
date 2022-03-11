@@ -15,7 +15,7 @@
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
-TOOLCHAIN_TAG ?= 0.7.0
+TOOLCHAIN_TAG ?= 0.9.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
@@ -40,7 +40,7 @@ BUILD_ARGS := --build-arg TOOLCHAIN_REPOSITORY=$(TOOLCHAIN_DOCKER_REPOSITORY)
 endif
 
 ifneq ($(TOOLCHAIN_TAG),)
-BUILD_ARGS := --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
+BUILD_ARGS += --build-arg TOOLCHAIN_VERSION=$(TOOLCHAIN_TAG)
 endif
 
 BUILD_ARGS += --build-arg RISCV_ARCH=$(RISCV_ARCH)
