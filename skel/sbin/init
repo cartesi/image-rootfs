@@ -12,6 +12,9 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 #
+SPLASH_FILE=/etc/motd
+
+[ ! -f "$SPLASH_FILE" -o "$splash" == "no" ] || cat "$SPLASH_FILE"
 
 export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/opt/cartesi/bin
 DEFAULT_ENV_FILE="/etc/environment"
