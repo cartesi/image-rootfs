@@ -135,7 +135,7 @@ new file mode 100644
 +
 +ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER),y)
 +define BUILD_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
-+    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo +nightly build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/rollup-http-server/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/rollup-http-server/Cargo.toml
++    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/rollup-http-server/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/rollup-http-server/Cargo.toml
 +endef
 +define INSTALL_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
 +    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/rollup-http-server/target/riscv64ima-cartesi-linux-gnu/release/rollup-http-server $(TARGET_DIR)/opt/cartesi/bin/rollup-http-server
@@ -145,7 +145,7 @@ new file mode 100644
 +
 +ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO_DAPP),y)
 +define BUILD_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
-+    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo +nightly build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/echo-dapp/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/echo-dapp/Cargo.toml
++    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/echo-dapp/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/echo-dapp/Cargo.toml
 +endef
 +define INSTALL_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
 +    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/echo-dapp/target/riscv64ima-cartesi-linux-gnu/release/echo-dapp $(TARGET_DIR)/opt/cartesi/bin/echo-dapp
