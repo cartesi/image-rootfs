@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Fixed Rust build by using default toolchain
+- Updated toolchain version to v0.9.1
 
 ## [0.11.0] - 2022-04-20
 ### Changed

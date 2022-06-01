@@ -15,7 +15,7 @@
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
-TOOLCHAIN_TAG ?= 0.9.0
+TOOLCHAIN_TAG ?= 0.9.1
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
