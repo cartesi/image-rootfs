@@ -1,0 +1,65 @@
+menuconfig BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
+	bool "Cartesi machine-emulator-tools"
+	help
+	  Various useful Cartesi machine libraries and utilities.
+
+	  Things like yield, dehash, flashdrive, readbe64, writebe64, etc...
+
+	  https://github.com/cartesi/machine-emulator-tools/
+
+if BR2_PACKAGE_MACHINE_EMULATOR_TOOLS
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_YIELD
+	bool "yield"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install yield command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO
+	bool "ioctl-echo-loop"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install ioctl-echo-loop command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP
+	bool "rollup"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install rollup command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
+	bool "rollup-http-server"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install rollup-http-server command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
+	bool "echo-dapp"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install echo-dapp web application.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_DEHASH
+	bool "dehash"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install dehash command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_FLASHDRIVE
+	bool "flashdrive"
+	help
+	  Install flashdrive command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_READBE64
+	bool "readbe64"
+	depends on BR2_PACKAGE_LUA_5_3
+	help
+	  Install readbe64 command line utility.
+
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_WRITEBE64
+	bool "writebe64"
+	depends on BR2_PACKAGE_LUA_5_3
+	help
+	  Install writebe64 command line utility.
+
+endif

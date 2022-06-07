@@ -49,6 +49,8 @@ COPY skel $BUILD_BASE/buildroot/skel
 COPY cartesi-buildroot-config $BUILD_BASE/buildroot
 COPY cartesi-busybox-fragment $BUILD_BASE/buildroot
 COPY patches $BUILD_BASE/buildroot/patches
+COPY external $BUILD_BASE/buildroot/external
+COPY local.mk $BUILD_BASE/buildroot/local.mk
 
 # Never use -jN with buildroot
 RUN \
@@ -57,7 +59,8 @@ RUN \
     git pull && \
     git apply patches/* && \
     cp cartesi-buildroot-config work/.config && \
-    make O=work olddefconfig && \
+    cp local.mk work/local.mk && \
+    make BR2_EXTERNAL=$BUILD_BASE/buildroot/external O=work olddefconfig && \
     make -C work && \
     cp work/images/rootfs.ext2 $BUILD_BASE/artifacts && \
     truncate -s %4096 $BUILD_BASE/artifacts/rootfs.ext2

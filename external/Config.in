@@ -1,0 +1,5 @@
+config BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+        bool "External toolchain has Cartesi kernel headers?"
+        depends on (BR2_riscv && BR2_RISCV_64)
+
+source "$BR2_EXTERNAL_CARTESI_PATH/package/machine-emulator-tools/Config.in"

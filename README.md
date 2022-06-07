@@ -64,6 +64,10 @@ If you want to play around on the environment you can also do:
 $ make run
 ```
 
+## Customizations
+
+Customizations are based on the br2-external mechanism. For more information read [Buildroot](https://buildroot.org/downloads/manual/manual.html#outside-br-custom) documentation.
+
 ## Contributing
 
 Thank you for your interest in Cartesi! Head over to our [Contributing Guidelines](CONTRIBUTING.md) for instructions on how to sign our Contributors Agreement and get started with

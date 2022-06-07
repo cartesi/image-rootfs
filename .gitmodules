@@ -1,0 +1,3 @@
+[submodule "external/tools"]
+	path = external/tools
+	url = ../machine-emulator-tools.git
