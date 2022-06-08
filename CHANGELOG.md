@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 - Moved showing cartesi-logo from bbl to init
+- Added LuaSocket and LPeg libraries
 
 ## [0.11.1] - 2022-06-02
 ### Changed
