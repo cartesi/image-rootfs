@@ -2,7 +2,7 @@ name: Build
 on: [push]
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -76,7 +76,7 @@ jobs:
             TOOLCHAIN_VERSION=0.9.1
 
   build-fd-emulation:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # Do not publish fs-emulation images
     if: false
     steps:
