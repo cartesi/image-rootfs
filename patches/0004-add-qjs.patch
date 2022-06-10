@@ -13,17 +13,17 @@ diff -Naur a/package/qjs/01-add-libatomic.patch b/package/qjs/01-add-libatomic.p
 --- a/package/qjs/01-add-libatomic.patch	1970-01-01 00:00:00.000000000 +0000
 +++ b/package/qjs/01-add-libatomic.patch	2020-06-23 21:50:34.686555000 +0000
 @@ -0,0 +1,12 @@
-+diff -Naur quickjs-2020-04-12.old/Makefile quickjs-2020-04-12.new/Makefile
-+--- quickjs-2020-04-12.old/Makefile	2020-04-12 13:18:13.000000000 +0000
-++++ quickjs-2020-04-12.new/Makefile	2020-06-23 21:50:13.452255000 +0000
-+@@ -166,7 +166,7 @@
-+ QJS_OBJS+=$(OBJDIR)/qjscalc.o
++diff -Naur quickjs-2021-03-27.old/Makefile quickjs-2021-03-27.new/Makefile
++--- quickjs-2021-03-27.old/Makefile	2020-04-12 13:18:13.000000000 +0000
+++++ quickjs-2021-03-27.new/Makefile	2020-06-23 21:50:13.452255000 +0000
++@@ -175,7 +175,7 @@
 + endif
 +
++ HOST_LIBS=-lm -ldl -lpthread
 +-LIBS=-lm
 ++LIBS=-lm -latomic
 + ifndef CONFIG_WIN32
-+ LIBS+=-ldl
++ LIBS+=-ldl -lpthread
 + endif
 diff -Naur a/package/qjs/Config.in b/package/qjs/Config.in
 --- a/package/qjs/Config.in	1970-01-01 00:00:00.000000000 +0000
@@ -39,7 +39,7 @@ diff -Naur a/package/qjs/qjs.hash b/package/qjs/qjs.hash
 --- a/package/qjs/qjs.hash	1970-01-01 00:00:00.000000000 +0000
 +++ b/package/qjs/qjs.hash	2020-06-24 01:47:08.772021000 +0000
 @@ -0,0 +1 @@
-+sha1  5fc6872e8cf307b32dd8245ca96949acde77b1ba  quickjs-2020-04-12.tar.xz
++sha1  95836721cf3931a0043461db6c710415f05ed2cf  quickjs-2021-03-27.tar.xz
 diff -Naur a/package/qjs/qjs.mk b/package/qjs/qjs.mk
 --- a/package/qjs/qjs.mk	1970-01-01 00:00:00.000000000 +0000
 +++ b/package/qjs/qjs.mk	2020-06-24 01:39:20.635123000 +0000
@@ -50,7 +50,7 @@ diff -Naur a/package/qjs/qjs.mk b/package/qjs/qjs.mk
 +#
 +################################################################################
 +
-+QJS_VERSION = 2020-04-12
++QJS_VERSION = 2021-03-27
 +QJS_SOURCE = quickjs-$(QJS_VERSION).tar.xz
 +QJS_SITE = https://bellard.org/quickjs
 +QJS_LICENSE = MIT
