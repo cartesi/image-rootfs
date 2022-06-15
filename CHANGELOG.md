@@ -6,10 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.12.0] - 2022-06-28
+## [0.12.0] - 2022-07-01
 ### Changed
 - Moved showing cartesi-logo from bbl to init
 - Added LuaSocket and LPeg libraries
+- Add machine-emulator-tools as a submodule.
+- Convert 0007-add-machine-emulator-tools.patch into br2-external structure
 
 ## [0.11.1] - 2022-06-02
 ### Changed
