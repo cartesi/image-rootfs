@@ -1,0 +1,9 @@
+menuconfig BR2_PACKAGE_TXIKI
+	bool "QuickJS runtime with networking support"
+	depends on BR2_PACKAGE_LIBCURL
+	depends on BR2_PACKAGE_LIBOPENSSL
+	depends on BR2_PACKAGE_LIBUV
+	help
+	  QuickJS runtime with networking support.
+
+	  https://github.com/saghul/txiki.js

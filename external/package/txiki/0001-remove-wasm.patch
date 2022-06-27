@@ -1,0 +1,1489 @@
+diff -Naur a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2022-06-27 13:03:16.714385424 -0300
++++ b/CMakeLists.txt	2022-06-28 00:05:14.324200425 -0300
+@@ -67,14 +67,6 @@
+ 
+ add_subdirectory(deps/quickjs EXCLUDE_FROM_ALL)
+ 
+-option(libuv_buildtests "" OFF)
+-add_subdirectory(deps/libuv EXCLUDE_FROM_ALL)
+-
+-set(BUILD_WASI "simple" CACHE STRING "WASI implementation")
+-add_subdirectory(deps/wasm3 EXCLUDE_FROM_ALL)
+-
+-find_package(CURL REQUIRED)
+-
+ add_executable(tjs
+     src/bootstrap.c
+     src/cli.c
+@@ -94,10 +86,8 @@
+     src/utils.c
+     src/version.c
+     src/vm.c
+-    src/wasm.c
+     src/worker.c
+     src/xhr.c
+-    ../deps/quickjs/src/cutils.c
+ )
+ 
+ set_target_properties(tjs PROPERTIES
+@@ -107,11 +97,30 @@
+ 
+ string(TOLOWER ${CMAKE_SYSTEM_NAME} TJS_PLATFORM)
+ target_compile_definitions(tjs PRIVATE TJS__PLATFORM="${TJS_PLATFORM}")
++
++find_package(CURL REQUIRED)
+ target_include_directories(tjs PRIVATE ${CURL_INCLUDE_DIRS})
+-target_link_libraries(tjs qjs uv_a m3 m ${CURL_LIBRARIES})
++target_link_libraries(tjs ${CURL_LIBRARIES})
++
++find_path(LIBUV_INCLUDE_DIR NAMES uv.h)
++find_library(LIBUV_LIBRARY NAMES uv libuv)
++include(FindPackageHandleStandardArgs)
++find_package_handle_standard_args(LIBUV
++                                  REQUIRED_VARS
++                                  LIBUV_LIBRARY
++                                  LIBUV_INCLUDE_DIR)
++mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)
++if(LIBUV_FOUND)
++    set(LIBUV_INCLUDE_DIRS "${LIBUV_INCLUDE_DIR}")
++    set(LIBUV_LIBRARIES "${LIBUV_LIBRARY}")
++endif()
++target_include_directories(tjs PRIVATE ${LIBUV_INCLUDE_DIRS})
++target_link_libraries(tjs ${LIBUV_LIBRARIES})
++
+ if(MINGW)
+     target_link_libraries(tjs pthread)
+ endif()
++target_link_libraries(tjs qjs m atomic)
+ 
+ if (BUILD_WITH_ASAN)
+     target_compile_options(tjs PRIVATE -fsanitize=address)
+diff -Naur a/src/js/bundle.js b/src/js/bundle.js
+--- a/src/js/bundle.js	2022-06-27 13:05:57.074129868 -0300
++++ b/src/js/bundle.js	2022-06-27 13:04:43.027578856 -0300
+@@ -13154,174 +13154,6 @@
+   value: new Performance()
+ });
+ 
+-// src/js/polyfills/wasm.js
+-var { wasm } = globalThis.__bootstrap;
+-var kWasmModule = Symbol("kWasmModule");
+-var kWasmModuleRef = Symbol("kWasmModuleRef");
+-var kWasmExports = Symbol("kWasmExports");
+-var kWasmInstance = Symbol("kWasmInstance");
+-var kWasmInstances = Symbol("kWasmInstances");
+-var kWasiLinked = Symbol("kWasiLinked");
+-var kWasiStarted = Symbol("kWasiStarted");
+-var kWasiOptions = Symbol("kWasiOptions");
+-var CompileError = class extends Error {
+-  constructor(...args) {
+-    super(...args);
+-    this.name = "CompileError";
+-  }
+-};
+-var LinkError = class extends Error {
+-  constructor(...args) {
+-    super(...args);
+-    this.name = "LinkError";
+-  }
+-};
+-var RuntimeError = class extends Error {
+-  constructor(...args) {
+-    super(...args);
+-    this.name = "RuntimeError";
+-  }
+-};
+-function getWasmError(e2) {
+-  switch (e2.wasmError) {
+-    case "CompileError":
+-      return new CompileError(e2.message);
+-    case "LinkError":
+-      return new LinkError(e2.message);
+-    case "RuntimeError":
+-      return new RuntimeError(e2.message);
+-    default:
+-      return new TypeError(`Invalid WASM error: ${e2.wasmError}`);
+-  }
+-}
+-function callWasmFunction(name, ...args) {
+-  const instance = this;
+-  try {
+-    return instance.callFunction(name, ...args);
+-  } catch (e2) {
+-    if (e2.wasmError) {
+-      throw getWasmError(e2);
+-    } else {
+-      throw e2;
+-    }
+-  }
+-}
+-function buildInstance(mod) {
+-  try {
+-    return wasm.buildInstance(mod);
+-  } catch (e2) {
+-    if (e2.wasmError) {
+-      throw getWasmError(e2);
+-    } else {
+-      throw e2;
+-    }
+-  }
+-}
+-function linkWasi(instance) {
+-  try {
+-    instance.linkWasi();
+-  } catch (e2) {
+-    if (e2.wasmError) {
+-      throw getWasmError(e2);
+-    } else {
+-      throw e2;
+-    }
+-  }
+-}
+-function parseModule(buf) {
+-  try {
+-    return wasm.parseModule(buf);
+-  } catch (e2) {
+-    if (e2.wasmError) {
+-      throw getWasmError(e2);
+-    } else {
+-      throw e2;
+-    }
+-  }
+-}
+-var Module = class {
+-  constructor(buf) {
+-    this[kWasmModule] = parseModule(buf);
+-  }
+-  static exports(module) {
+-    return wasm.moduleExports(module[kWasmModule]);
+-  }
+-  static imports(module) {
+-    return {};
+-  }
+-};
+-var Instance = class {
+-  constructor(module, importObject = {}) {
+-    const instance = buildInstance(module[kWasmModule]);
+-    if (importObject.wasi_unstable) {
+-      linkWasi(instance);
+-      this[kWasiLinked] = true;
+-    }
+-    const _exports = Module.exports(module);
+-    const exports = /* @__PURE__ */ Object.create(null);
+-    for (const item of _exports) {
+-      if (item.kind === "function") {
+-        exports[item.name] = callWasmFunction.bind(instance, item.name);
+-      }
+-    }
+-    this[kWasmInstance] = instance;
+-    this[kWasmExports] = Object.freeze(exports);
+-    this[kWasmModuleRef] = module;
+-    globalThis.WebAssembly[kWasmInstances].push(this);
+-  }
+-  get exports() {
+-    return this[kWasmExports];
+-  }
+-};
+-var WASI = class {
+-  constructor(options = { args: [], env: {}, preopens: {} }) {
+-    __publicField(this, "wasiImport", "w4s1");
+-    this[kWasiStarted] = false;
+-    if (options === null || typeof options !== "object") {
+-      throw new TypeError(`options must be an object`);
+-    }
+-    this[kWasiOptions] = JSON.parse(JSON.stringify(options));
+-  }
+-  start(instance) {
+-    if (this[kWasiStarted]) {
+-      throw new Error("WASI instance has already started");
+-    }
+-    if (!instance[kWasiLinked]) {
+-      throw new Error("WASM instance doesn't have WASI linked");
+-    }
+-    if (!instance.exports._start) {
+-      throw new TypeError("WASI entrypoint not found");
+-    }
+-    this[kWasiStarted] = true;
+-    instance.exports._start(...this[kWasiOptions].args ?? []);
+-  }
+-};
+-var WebAssembly = class {
+-  constructor() {
+-    __publicField(this, "Module", Module);
+-    __publicField(this, "Instance", Instance);
+-    __publicField(this, "CompileError", CompileError);
+-    __publicField(this, "LinkError", LinkError);
+-    __publicField(this, "RuntimeError", RuntimeError);
+-    __publicField(this, "WASI", WASI);
+-    this[kWasmInstances] = [];
+-  }
+-  async compile(src) {
+-    return new Module(src);
+-  }
+-  async instantiate(src, importObject) {
+-    const module = await this.compile(src);
+-    const instance = new Instance(module, importObject);
+-    return { module, instance };
+-  }
+-};
+-Object.defineProperty(globalThis, "WebAssembly", {
+-  enumerable: true,
+-  configurable: true,
+-  writable: true,
+-  value: new WebAssembly()
+-});
+-
+ // src/js/polyfills/worker.js
+ var { Worker: _Worker } = globalThis.__bootstrap;
+ var kWorker = Symbol("kWorker");
+@@ -13826,8 +13658,7 @@
+   "setInterval",
+   "setTimeout",
+   "signal",
+-  "signals",
+-  "wasm"
++  "signals"
+ ];
+ for (const [key, value] of Object.entries(core8)) {
+   if (noExport.includes(key)) {
+diff -Naur a/src/js/polyfills/index.js b/src/js/polyfills/index.js
+--- a/src/js/polyfills/index.js	2022-06-27 13:03:16.727718735 -0300
++++ b/src/js/polyfills/index.js	2022-06-27 13:04:43.027578856 -0300
+@@ -15,5 +15,4 @@
+ import './console.js';
+ import './crypto.js';
+ import './performance.js';
+-import './wasm.js';
+ import './worker.js';
+diff -Naur a/src/js/polyfills/wasm.js b/src/js/polyfills/wasm.js
+--- a/src/js/polyfills/wasm.js	2022-06-27 13:03:16.727718735 -0300
++++ b/src/js/polyfills/wasm.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,202 +0,0 @@
+-const { wasm } = globalThis.__bootstrap;
+-
+-const kWasmModule = Symbol('kWasmModule');
+-const kWasmModuleRef = Symbol('kWasmModuleRef');
+-const kWasmExports = Symbol('kWasmExports');
+-const kWasmInstance = Symbol('kWasmInstance');
+-const kWasmInstances = Symbol('kWasmInstances');
+-const kWasiLinked = Symbol('kWasiLinked');
+-const kWasiStarted = Symbol('kWasiStarted');
+-const kWasiOptions = Symbol('kWasiOptions');
+-
+-
+-class CompileError extends Error {
+-    constructor(...args) {
+-        super(...args);
+-        this.name = 'CompileError';
+-    }
+-};
+-
+-class LinkError extends Error {
+-    constructor(...args) {
+-        super(...args);
+-        this.name = 'LinkError';
+-    }
+-};
+-
+-class RuntimeError extends Error {
+-    constructor(...args) {
+-        super(...args);
+-        this.name = 'RuntimeError';
+-    }
+-};
+-
+-
+-function getWasmError(e) {
+-    switch(e.wasmError) {
+-        case 'CompileError':
+-            return new CompileError(e.message);
+-        case 'LinkError':
+-            return new LinkError(e.message);
+-        case 'RuntimeError':
+-            return new RuntimeError(e.message);
+-        default:
+-            return new TypeError(`Invalid WASM error: ${e.wasmError}`);
+-    }
+-}
+-
+-function callWasmFunction(name, ...args) {
+-    const instance = this;
+-    try {
+-        return instance.callFunction(name, ...args);
+-    } catch(e) {
+-        if (e.wasmError) {
+-            throw getWasmError(e);
+-        } else {
+-            throw e;
+-        }
+-    }
+-}
+-
+-function buildInstance(mod) {
+-    try {
+-        return wasm.buildInstance(mod);
+-    } catch(e) {
+-        if (e.wasmError) {
+-            throw getWasmError(e);
+-        } else {
+-            throw e;
+-        }
+-    }
+-}
+-
+-function linkWasi(instance) {
+-    try {
+-        instance.linkWasi();
+-    } catch(e) {
+-        if (e.wasmError) {
+-            throw getWasmError(e);
+-        } else {
+-            throw e;
+-        }
+-    }
+-}
+-
+-function parseModule(buf) {
+-    try {
+-        return wasm.parseModule(buf);
+-    } catch (e) {
+-        if (e.wasmError) {
+-            throw getWasmError(e);
+-        } else {
+-            throw e;
+-        }
+-    }
+-}
+-
+-class Module {
+-    constructor(buf) {
+-        this[kWasmModule] =  parseModule(buf);
+-    }
+-
+-    static exports(module) {
+-        return wasm.moduleExports(module[kWasmModule]);
+-    }
+-
+-    static imports(module) {
+-        // TODO.
+-        return {};
+-    }
+-}
+-
+-class Instance {
+-    constructor(module, importObject = {}) {
+-        const instance = buildInstance(module[kWasmModule]);
+-
+-        if (importObject.wasi_unstable) {
+-            linkWasi(instance);
+-            this[kWasiLinked] = true;
+-        }
+-
+-        const _exports = Module.exports(module);
+-        const exports = Object.create(null);
+-
+-        for (const item of _exports) {
+-            if (item.kind === 'function') {
+-                exports[item.name] = callWasmFunction.bind(instance, item.name);
+-            }
+-        }
+-
+-        this[kWasmInstance] = instance;
+-        this[kWasmExports] = Object.freeze(exports);
+-        this[kWasmModuleRef] = module;
+-        globalThis.WebAssembly[kWasmInstances].push(this);
+-    }
+-
+-    get exports() {
+-        return this[kWasmExports];
+-    }
+-}
+-
+-class WASI {
+-    wasiImport = 'w4s1';  // Doesn't matter right now.
+-
+-    constructor(options = { args: [], env: {}, preopens: {}}) {
+-        this[kWasiStarted] = false;
+-
+-        if (options === null || typeof options !== 'object') {
+-            throw new TypeError(`options must be an object`);
+-        }
+-
+-        this[kWasiOptions] = JSON.parse(JSON.stringify(options));
+-    }
+-
+-    start(instance) {
+-        if (this[kWasiStarted]) {
+-            throw new Error('WASI instance has already started');
+-        }
+-
+-        if (!instance[kWasiLinked]){
+-            throw new Error('WASM instance doesn\'t have WASI linked');
+-        }
+-
+-        if (!instance.exports._start) {
+-            throw new TypeError('WASI entrypoint not found');
+-        }
+-
+-        this[kWasiStarted] = true;
+-        instance.exports._start(...(this[kWasiOptions].args ?? []));
+-    }
+-}
+-
+-class WebAssembly {
+-    Module = Module;
+-    Instance = Instance;
+-    CompileError = CompileError;
+-    LinkError = LinkError;
+-    RuntimeError = RuntimeError;
+-    WASI = WASI;
+-
+-    constructor() {
+-        this[kWasmInstances] = [];
+-    }
+-
+-    async compile(src) {
+-        return new Module(src);
+-    }
+-
+-    async instantiate(src, importObject) {
+-        const module = await this.compile(src);
+-        const instance = new Instance(module, importObject);
+-
+-        return { module, instance };
+-    }
+-}
+-
+-
+-Object.defineProperty(globalThis, 'WebAssembly', {
+-    enumerable: true,
+-    configurable: true,
+-    writable: true,
+-    value: new WebAssembly()
+-});
+diff -Naur a/src/js/tjs/index.js b/src/js/tjs/index.js
+--- a/src/js/tjs/index.js	2022-06-27 13:03:16.731052063 -0300
++++ b/src/js/tjs/index.js	2022-06-27 13:04:43.027578856 -0300
+@@ -35,8 +35,7 @@
+     'setInterval',
+     'setTimeout',
+     'signal',
+-    'signals',
+-    'wasm'
++    'signals'
+ ];
+ 
+ for (const [key, value] of Object.entries(core)) {
+diff -Naur a/src/os.c b/src/os.c
+--- a/src/os.c	2022-06-27 13:03:16.731052063 -0300
++++ b/src/os.c	2022-06-27 13:41:06.542339987 -0300
+@@ -24,7 +24,6 @@
+ 
+ #include "private.h"
+ #include "utils.h"
+-#include "wasm.h"
+ 
+ #include <curl/curl.h>
+ #include <string.h>
+@@ -430,10 +429,6 @@
+     return obj;
+ }
+ 
+-static JSValue tjs_availableParallelism(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+-    return JS_NewUint32(ctx, uv_available_parallelism());
+-}
+-
+ static const JSCFunctionListEntry tjs_os_funcs[] = {
+     TJS_CONST(AF_INET),
+     TJS_CONST(AF_INET6),
+@@ -460,7 +455,6 @@
+     TJS_CGETSET_DEF("pid", tjs_getpid, NULL),
+     TJS_CGETSET_DEF("ppid", tjs_getppid, NULL),
+     TJS_CFUNC_DEF("userInfo", 0, tjs_userInfo),
+-    TJS_CFUNC_DEF("availableParallelism", 0, tjs_availableParallelism),
+ };
+ 
+ void tjs__mod_os_init(JSContext *ctx, JSValue ns) {
+diff -Naur a/src/private.h b/src/private.h
+--- a/src/private.h	2022-06-27 13:03:16.731052063 -0300
++++ b/src/private.h	2022-06-27 13:04:43.027578856 -0300
+@@ -28,7 +28,6 @@
+ #include "../deps/quickjs/src/cutils.h"
+ #include "../deps/quickjs/src/list.h"
+ #include "tjs.h"
+-#include "wasm.h"
+ 
+ #include <curl/curl.h>
+ #include <quickjs.h>
+@@ -53,9 +52,6 @@
+         uv_timer_t timer;
+     } curl_ctx;
+     struct {
+-        IM3Environment env;
+-    } wasm_ctx;
+-    struct {
+         JSValue date_ctor;
+         JSValue u8array_ctor;
+     } builtins;
+@@ -72,7 +68,6 @@
+ void tjs__mod_sys_init(JSContext *ctx, JSValue ns);
+ void tjs__mod_timers_init(JSContext *ctx, JSValue ns);
+ void tjs__mod_udp_init(JSContext *ctx, JSValue ns);
+-void tjs__mod_wasm_init(JSContext *ctx, JSValue ns);
+ void tjs__mod_worker_init(JSContext *ctx, JSValue ns);
+ void tjs__mod_xhr_init(JSContext *ctx, JSValue ns);
+ 
+diff -Naur a/src/sys.c b/src/sys.c
+--- a/src/sys.c	2022-06-27 13:03:16.731052063 -0300
++++ b/src/sys.c	2022-06-27 13:04:43.027578856 -0300
+@@ -89,7 +89,6 @@
+     JS_DefinePropertyValueStr(ctx, versions, "tjs", JS_NewString(ctx, tjs_version()), JS_PROP_C_W_E);
+     JS_DefinePropertyValueStr(ctx, versions, "uv", JS_NewString(ctx, uv_version_string()), JS_PROP_C_W_E);
+     JS_DefinePropertyValueStr(ctx, versions, "curl", JS_NewString(ctx, curl_version()), JS_PROP_C_W_E);
+-    JS_DefinePropertyValueStr(ctx, versions, "wasm3", JS_NewString(ctx, M3_VERSION), JS_PROP_C_W_E);
+     JS_DefinePropertyValueStr(ctx, ns, "versions", versions, JS_PROP_C_W_E);
+     JS_DefinePropertyValueStr(ctx, ns, "platform", JS_NewString(ctx, TJS__PLATFORM), JS_PROP_C_W_E);
+ }
+diff -Naur a/src/version.h b/src/version.h
+--- a/src/version.h	1969-12-31 21:00:00.000000000 -0300
++++ b/src/version.h	2022-06-21 19:34:50.810757099 -0300
+@@ -0,0 +1,36 @@
++/*
++ * QuickJS libuv bindings
++ *
++ * Copyright (c) 2019-present Saúl Ibarra Corretgé <s@saghul.net>
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
++ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
++#ifndef TJS_VERSION_H
++#define TJS_VERSION_H
++
++
++#define TJS_VERSION_MAJOR 22
++#define TJS_VERSION_MINOR 4
++#define TJS_VERSION_PATCH 1
++#define TJS_VERSION_SUFFIX ""
++
++const char* tjs_version(void);
++
++#endif
+diff -Naur a/src/vm.c b/src/vm.c
+--- a/src/vm.c	2022-06-27 13:03:16.731052063 -0300
++++ b/src/vm.c	2022-06-27 13:04:43.027578856 -0300
+@@ -69,7 +69,6 @@
+     tjs__mod_sys_init(ctx, ns);
+     tjs__mod_timers_init(ctx, ns);
+     tjs__mod_udp_init(ctx, ns);
+-    tjs__mod_wasm_init(ctx, ns);
+     tjs__mod_worker_init(ctx, ns);
+     tjs__mod_xhr_init(ctx, ns);
+ }
+@@ -231,9 +230,6 @@
+     JS_FreeAtom(qrt->ctx, bootstrap_ns_atom);
+     JS_FreeValue(qrt->ctx, bootstrap_ns);
+ 
+-    /* WASM */
+-    qrt->wasm_ctx.env = m3_NewEnvironment();
+-
+     /* Load some builtin references for easy access */
+     qrt->builtins.date_ctor = JS_GetPropertyStr(qrt->ctx, global_obj, "Date");
+     CHECK_EQ(JS_IsUndefined(qrt->builtins.date_ctor), 0);
+@@ -264,9 +260,6 @@
+         uv_close((uv_handle_t *) &qrt->curl_ctx.timer, NULL);
+     }
+ 
+-    /* Destroy WASM runtime. */
+-    m3_FreeEnvironment(qrt->wasm_ctx.env);
+-
+     /* Cleanup loop. All handles should be closed. */
+     int closed = 0;
+     for (int i = 0; i < 5; i++) {
+diff -Naur a/src/wasm.c b/src/wasm.c
+--- a/src/wasm.c	2022-06-27 13:03:16.731052063 -0300
++++ b/src/wasm.c	1969-12-31 21:00:00.000000000 -0300
+@@ -1,378 +0,0 @@
+-/*
+- * txiki.js
+- *
+- * Copyright (c) 2019-present Saúl Ibarra Corretgé <s@saghul.net>
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a copy
+- * of this software and associated documentation files (the "Software"), to deal
+- * in the Software without restriction, including without limitation the rights
+- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+- * copies of the Software, and to permit persons to whom the Software is
+- * furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included in
+- * all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+- * THE SOFTWARE.
+- */
+-
+-#include "wasm.h"
+-
+-#include "private.h"
+-#include "tjs.h"
+-#include "utils.h"
+-
+-#define TJS__WASM_MAX_ARGS 32
+-
+-static JSClassID tjs_wasm_module_class_id;
+-
+-typedef struct {
+-    IM3Module module;
+-    struct {
+-        uint8_t *bytes;
+-        size_t size;
+-    } data;
+-} TJSWasmModule;
+-
+-static void tjs_wasm_module_finalizer(JSRuntime *rt, JSValue val) {
+-    TJSWasmModule *m = JS_GetOpaque(val, tjs_wasm_module_class_id);
+-    if (m) {
+-        if (m->module)
+-            m3_FreeModule(m->module);
+-        js_free_rt(rt, m->data.bytes);
+-        js_free_rt(rt, m);
+-    }
+-}
+-
+-static JSClassDef tjs_wasm_module_class = {
+-    "Module",
+-    .finalizer = tjs_wasm_module_finalizer,
+-};
+-
+-static JSClassID tjs_wasm_instance_class_id;
+-
+-typedef struct {
+-    IM3Runtime runtime;
+-    IM3Module module;
+-    bool loaded;
+-} TJSWasmInstance;
+-
+-static void tjs_wasm_instance_finalizer(JSRuntime *rt, JSValue val) {
+-    TJSWasmInstance *i = JS_GetOpaque(val, tjs_wasm_instance_class_id);
+-    if (i) {
+-        if (i->module) {
+-            // Free the module, only if it wasn't previously loaded.
+-            if (!i->loaded)
+-                m3_FreeModule(i->module);
+-        }
+-        if (i->runtime)
+-            m3_FreeRuntime(i->runtime);
+-        js_free_rt(rt, i);
+-    }
+-}
+-
+-static JSClassDef tjs_wasm_instance_class = {
+-    "Instance",
+-    .finalizer = tjs_wasm_instance_finalizer,
+-};
+-
+-static JSValue tjs_new_wasm_module(JSContext *ctx) {
+-    TJSWasmModule *m;
+-    JSValue obj;
+-
+-    obj = JS_NewObjectClass(ctx, tjs_wasm_module_class_id);
+-    if (JS_IsException(obj))
+-        return obj;
+-
+-    m = js_mallocz(ctx, sizeof(*m));
+-    if (!m) {
+-        JS_FreeValue(ctx, obj);
+-        return JS_EXCEPTION;
+-    }
+-
+-    JS_SetOpaque(obj, m);
+-    return obj;
+-}
+-
+-static TJSWasmModule *tjs_wasm_module_get(JSContext *ctx, JSValueConst obj) {
+-    return JS_GetOpaque2(ctx, obj, tjs_wasm_module_class_id);
+-}
+-
+-static JSValue tjs_new_wasm_instance(JSContext *ctx) {
+-    TJSWasmInstance *i;
+-    JSValue obj;
+-
+-    obj = JS_NewObjectClass(ctx, tjs_wasm_instance_class_id);
+-    if (JS_IsException(obj))
+-        return obj;
+-
+-    i = js_mallocz(ctx, sizeof(*i));
+-    if (!i) {
+-        JS_FreeValue(ctx, obj);
+-        return JS_EXCEPTION;
+-    }
+-
+-    JS_SetOpaque(obj, i);
+-    return obj;
+-}
+-
+-static TJSWasmInstance *tjs_wasm_instance_get(JSContext *ctx, JSValueConst obj) {
+-    return JS_GetOpaque2(ctx, obj, tjs_wasm_instance_class_id);
+-}
+-
+-JSValue tjs_throw_wasm_error(JSContext *ctx, const char *name, M3Result r) {
+-    CHECK_NOT_NULL(r);
+-    JSValue obj = JS_NewError(ctx);
+-    JS_DefinePropertyValueStr(ctx, obj, "message", JS_NewString(ctx, r), JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
+-    JS_DefinePropertyValueStr(ctx, obj, "wasmError", JS_NewString(ctx, name), JS_PROP_WRITABLE | JS_PROP_CONFIGURABLE);
+-    if (JS_IsException(obj))
+-        obj = JS_NULL;
+-    return JS_Throw(ctx, obj);
+-}
+-
+-static JSValue tjs__wasm_result(JSContext *ctx, M3ValueType type, const void *stack) {
+-    switch (type) {
+-        case c_m3Type_i32: {
+-            int32_t val = *(int32_t *) stack;
+-            return JS_NewInt32(ctx, val);
+-        }
+-        case c_m3Type_i64: {
+-            int64_t val = *(int64_t *) stack;
+-            if (val == (int32_t) val)
+-                return JS_NewInt32(ctx, (int32_t) val);
+-            else
+-                return JS_NewBigInt64(ctx, val);
+-        }
+-        case c_m3Type_f32: {
+-            float val = *(float *) stack;
+-            return JS_NewFloat64(ctx, (double) val);
+-        }
+-        case c_m3Type_f64: {
+-            double val = *(double *) stack;
+-            return JS_NewFloat64(ctx, val);
+-        }
+-        default:
+-            return JS_UNDEFINED;
+-    }
+-}
+-
+-static JSValue tjs_wasm_callfunction(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+-    TJSWasmInstance *i = tjs_wasm_instance_get(ctx, this_val);
+-    if (!i)
+-        return JS_EXCEPTION;
+-
+-    const char *fname = JS_ToCString(ctx, argv[0]);
+-    if (!fname)
+-        return JS_EXCEPTION;
+-
+-    TJSRuntime *qrt = TJS_GetRuntime(ctx);
+-    CHECK_NOT_NULL(qrt);
+-
+-    IM3Function func;
+-    M3Result r = m3_FindFunction(&func, i->runtime, fname);
+-    if (r) {
+-        JS_FreeCString(ctx, fname);
+-        return tjs_throw_wasm_error(ctx, "RuntimeError", r);
+-    }
+-
+-    JS_FreeCString(ctx, fname);
+-
+-    int nargs = argc - 1;
+-    if (nargs == 0) {
+-        r = m3_Call(func, 0, NULL);
+-    } else {
+-        const char *m3_argv[nargs + 1];
+-        for (int i = 0; i < nargs; i++) {
+-            m3_argv[i] = JS_ToCString(ctx, argv[i + 1]);
+-        }
+-        m3_argv[nargs] = NULL;
+-        r = m3_CallArgv(func, nargs, m3_argv);
+-        for (int i = 0; i < nargs; i++) {
+-            JS_FreeCString(ctx, m3_argv[i]);
+-        }
+-    }
+-
+-    if (r)
+-        return tjs_throw_wasm_error(ctx, "RuntimeError", r);
+-
+-    // https://webassembly.org/docs/js/ See "ToJSValue"
+-    // NOTE: here we support returning BigInt, because we can.
+-
+-    int ret_count = m3_GetRetCount(func);
+-
+-    if (ret_count > TJS__WASM_MAX_ARGS)
+-        return tjs_throw_wasm_error(ctx, "RuntimeError", "Too many return values");
+-
+-    uint64_t valbuff[TJS__WASM_MAX_ARGS];
+-    const void *valptrs[TJS__WASM_MAX_ARGS];
+-    memset(valbuff, 0, sizeof(valbuff));
+-    for (int i = 0; i < ret_count; i++) {
+-        valptrs[i] = &valbuff[i];
+-    }
+-
+-    r = m3_GetResults(func, ret_count, valptrs);
+-    if (r)
+-        return tjs_throw_wasm_error(ctx, "RuntimeError", r);
+-
+-    if (ret_count == 1) {
+-        return tjs__wasm_result(ctx, m3_GetRetType(func, 0), valptrs[0]);
+-    } else {
+-        JSValue rets = JS_NewArray(ctx);
+-        for (int i = 0; i < ret_count; i++) {
+-            JS_SetPropertyUint32(ctx, rets, i, tjs__wasm_result(ctx, m3_GetRetType(func, i), valptrs[i]));
+-        }
+-        return rets;
+-    }
+-}
+-
+-static JSValue tjs_wasm_linkwasi(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+-    TJSWasmInstance *i = tjs_wasm_instance_get(ctx, this_val);
+-    if (!i)
+-        return JS_EXCEPTION;
+-
+-    M3Result r = m3_LinkWASI(i->module);
+-    if (r)
+-        return tjs_throw_wasm_error(ctx, "LinkError", r);
+-
+-    return JS_UNDEFINED;
+-}
+-
+-static JSValue tjs_wasm_buildinstance(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+-    TJSWasmModule *m = tjs_wasm_module_get(ctx, argv[0]);
+-    if (!m)
+-        return JS_EXCEPTION;
+-
+-    JSValue obj = tjs_new_wasm_instance(ctx);
+-    if (JS_IsException(obj))
+-        return obj;
+-
+-    TJSWasmInstance *i = tjs_wasm_instance_get(ctx, obj);
+-
+-    TJSRuntime *qrt = TJS_GetRuntime(ctx);
+-    CHECK_NOT_NULL(qrt);
+-
+-    M3Result r = m3_ParseModule(qrt->wasm_ctx.env, &i->module, m->data.bytes, m->data.size);
+-    CHECK_NULL(r);  // Should never fail because we already parsed it. TODO: clone it?
+-
+-    /* Create a runtime per module to avoid symbol clash. */
+-    i->runtime = m3_NewRuntime(qrt->wasm_ctx.env, /* TODO: adjust */ 512 * 1024, NULL);
+-    if (!i->runtime) {
+-        JS_FreeValue(ctx, obj);
+-        return JS_ThrowOutOfMemory(ctx);
+-    }
+-
+-    r = m3_LoadModule(i->runtime, i->module);
+-    if (r) {
+-        JS_FreeValue(ctx, obj);
+-        return tjs_throw_wasm_error(ctx, "LinkError", r);
+-    }
+-
+-    i->loaded = true;
+-
+-    return obj;
+-}
+-
+-static JSValue tjs_wasm_moduleexports(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+-    TJSWasmModule *m = tjs_wasm_module_get(ctx, argv[0]);
+-    if (!m)
+-        return JS_EXCEPTION;
+-
+-    JSValue exports = JS_NewArray(ctx);
+-    if (JS_IsException(exports))
+-        return exports;
+-
+-    for (size_t i = 0, j = 0; i < m->module->numFunctions; ++i) {
+-        IM3Function f = &m->module->functions[i];
+-        const char *name = m3_GetFunctionName(f);
+-        if (name) {
+-            JSValue item = JS_NewObjectProto(ctx, JS_NULL);
+-            JS_DefinePropertyValueStr(ctx, item, "name", JS_NewString(ctx, name), JS_PROP_C_W_E);
+-            JS_DefinePropertyValueStr(ctx, item, "kind", JS_NewString(ctx, "function"), JS_PROP_C_W_E);
+-            JS_DefinePropertyValueUint32(ctx, exports, j, item, JS_PROP_C_W_E);
+-            j++;
+-        }
+-    }
+-
+-    // TODO: other export types.
+-
+-    return exports;
+-}
+-
+-static JSValue tjs_wasm_parsemodule(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+-    TJSRuntime *qrt = TJS_GetRuntime(ctx);
+-    CHECK_NOT_NULL(qrt);
+-
+-    size_t size;
+-    uint8_t *buf = JS_GetArrayBuffer(ctx, &size, argv[0]);
+-
+-    if (!buf) {
+-        /* Reset the exception. */
+-        JS_FreeValue(ctx, JS_GetException(ctx));
+-
+-        /* Check if it's a typed array. */
+-        size_t aoffset, asize;
+-        JSValue abuf = JS_GetTypedArrayBuffer(ctx, argv[0], &aoffset, &asize, NULL);
+-        if (JS_IsException(abuf))
+-            return abuf;
+-        buf = JS_GetArrayBuffer(ctx, &size, abuf);
+-        JS_FreeValue(ctx, abuf);
+-        if (!buf)
+-            return JS_EXCEPTION;
+-        buf += aoffset;
+-        size = asize;
+-    }
+-
+-    JSValue obj = tjs_new_wasm_module(ctx);
+-    TJSWasmModule *m = tjs_wasm_module_get(ctx, obj);
+-    m->data.bytes = js_malloc(ctx, size);
+-    if (!m->data.bytes) {
+-        JS_FreeValue(ctx, obj);
+-        return JS_EXCEPTION;
+-    }
+-    memcpy(m->data.bytes, buf, size);
+-    m->data.size = size;
+-
+-    M3Result r = m3_ParseModule(qrt->wasm_ctx.env, &m->module, m->data.bytes, m->data.size);
+-    if (r) {
+-        JS_FreeValue(ctx, obj);
+-        return tjs_throw_wasm_error(ctx, "CompileError", r);
+-    }
+-
+-    return obj;
+-}
+-
+-static const JSCFunctionListEntry tjs_wasm_funcs[] = {
+-    TJS_CFUNC_DEF("buildInstance", 1, tjs_wasm_buildinstance),
+-    TJS_CFUNC_DEF("moduleExports", 1, tjs_wasm_moduleexports),
+-    TJS_CFUNC_DEF("parseModule", 1, tjs_wasm_parsemodule),
+-};
+-
+-static const JSCFunctionListEntry tjs_wasm_instance_funcs[] = {
+-    TJS_CFUNC_DEF("callFunction", 1, tjs_wasm_callfunction),
+-    TJS_CFUNC_DEF("linkWasi", 0, tjs_wasm_linkwasi),
+-};
+-
+-void tjs__mod_wasm_init(JSContext *ctx, JSValue ns) {
+-    /* Module object */
+-    JS_NewClassID(&tjs_wasm_module_class_id);
+-    JS_NewClass(JS_GetRuntime(ctx), tjs_wasm_module_class_id, &tjs_wasm_module_class);
+-    JS_SetClassProto(ctx, tjs_wasm_module_class_id, JS_NULL);
+-
+-    /* Instance object */
+-    JS_NewClassID(&tjs_wasm_instance_class_id);
+-    JS_NewClass(JS_GetRuntime(ctx), tjs_wasm_instance_class_id, &tjs_wasm_instance_class);
+-    JSValue proto = JS_NewObject(ctx);
+-    JS_SetPropertyFunctionList(ctx, proto, tjs_wasm_instance_funcs, countof(tjs_wasm_instance_funcs));
+-    JS_SetClassProto(ctx, tjs_wasm_instance_class_id, proto);
+-
+-    JSValue obj = JS_NewObjectProto(ctx, JS_NULL);
+-    JS_SetPropertyFunctionList(ctx, obj, tjs_wasm_funcs, countof(tjs_wasm_funcs));
+-
+-    JS_DefinePropertyValueStr(ctx, ns, "wasm", obj, JS_PROP_C_W_E);
+-}
+diff -Naur a/src/wasm.h b/src/wasm.h
+--- a/src/wasm.h	2022-06-27 13:03:16.731052063 -0300
++++ b/src/wasm.h	1969-12-31 21:00:00.000000000 -0300
+@@ -1,33 +0,0 @@
+-/*
+- * txiki.js
+- *
+- * Copyright (c) 2019-present Saúl Ibarra Corretgé <s@saghul.net>
+- *
+- * Permission is hereby granted, free of charge, to any person obtaining a copy
+- * of this software and associated documentation files (the "Software"), to deal
+- * in the Software without restriction, including without limitation the rights
+- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+- * copies of the Software, and to permit persons to whom the Software is
+- * furnished to do so, subject to the following conditions:
+- *
+- * The above copyright notice and this permission notice shall be included in
+- * all copies or substantial portions of the Software.
+- *
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+- * THE SOFTWARE.
+- */
+-
+-#ifndef TJS_WASM_H
+-#define TJS_WASM_H
+-
+-#include <wasm3.h>
+-#include <m3_api_wasi.h>
+-// XXX: Needed for enumerating a module's functions
+-#include <m3_env.h>
+-
+-#endif
+diff -Naur a/tests/test-fs-readdir.js b/tests/test-fs-readdir.js
+--- a/tests/test-fs-readdir.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-fs-readdir.js	2022-06-27 13:04:43.027578856 -0300
+@@ -1,6 +1,6 @@
+ import assert from './assert.js';
+ 
+-const dirs = [ 'advanced', 'fixtures', 'helpers', 'wasi', 'wasm' ];
++const dirs = [ 'advanced', 'fixtures', 'helpers' ];
+ 
+ 
+ (async () => {
+diff -Naur a/tests/test-wasm-f32.js b/tests/test-wasm-f32.js
+--- a/tests/test-wasm-f32.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-wasm-f32.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,16 +0,0 @@
+-import assert from './assert.js';
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const data = await tjs.readFile(path.join(import.meta.dirname, 'wasm', 'f32.wasm'));
+-    const { instance } = await WebAssembly.instantiate(data);
+-    const { exports } = instance;
+-
+-    assert.eq(exports.add(1.2, 0.8), 2, 'add works');
+-    const v = exports.add('-0', '-0');
+-    assert.ok(1 / v < 0, 'adding -0 works');
+-    assert.eq(exports.add(0, Infinity), Infinity, '0 + Infinity works');
+-    assert.eq(exports.add(0, -Infinity), -Infinity, '0 + -Infinity works');
+-    assert.eq(exports.add(-Infinity, Infinity), NaN, '-Infinity + Infinity works');
+-})();
+diff -Naur a/tests/test-wasm-f64.js b/tests/test-wasm-f64.js
+--- a/tests/test-wasm-f64.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-wasm-f64.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,16 +0,0 @@
+-import assert from './assert.js';
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const data = await tjs.readFile(path.join(import.meta.dirname, 'wasm', 'f64.wasm'));
+-    const { instance } = await WebAssembly.instantiate(data);
+-    const { exports } = instance;
+-
+-    assert.eq(exports.add(1.2, 0.8), 2, 'add works');
+-    const v = exports.add('-0', '-0');
+-    assert.ok(1 / v < 0, 'adding -0 works');
+-    assert.eq(exports.add(0, Infinity), Infinity, '0 + Infinity works');
+-    assert.eq(exports.add(0, -Infinity), -Infinity, '0 + -Infinity works');
+-    assert.eq(exports.add(-Infinity, Infinity), NaN, '-Infinity + Infinity works');
+-})();
+diff -Naur a/tests/test-wasm-i32.js b/tests/test-wasm-i32.js
+--- a/tests/test-wasm-i32.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-wasm-i32.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,24 +0,0 @@
+-import assert from './assert.js';
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const data = await tjs.readFile(path.join(import.meta.dirname, 'wasm', 'i32.wasm'));
+-    const { instance } = await WebAssembly.instantiate(data);
+-    const { exports } = instance;
+-
+-    assert.eq(exports.add(1, 2), 3, 'add works');
+-    assert.eq(exports.add(1, -2), -1, 'add works with negatives');
+-    assert.eq(exports.sub(1, 2), -1, 'sub works');
+-    assert.eq(exports.sub(1, -2), 3, 'sub works with negatives');
+-    assert.eq(exports.mul(2, 2), 4, 'mul works');
+-    assert.eq(exports.mul(2, -2), -4, 'mul works with negatives');
+-    assert.eq(exports.div_s(4, 2), 2, 'div_s works');
+-    try {
+-        exports.div_s(1, 0);
+-    } catch(e) {
+-        assert.ok(e instanceof WebAssembly.RuntimeError, 'div_s divide by zero throws RuntimeError');
+-    }
+-    assert.eq(exports.div_u(-1, -1), 1, 'div_u works');
+-    assert.eq(exports.rem_s(5, 2), 1, 'rem_s works');
+-})();
+diff -Naur a/tests/test-wasm-i64.js b/tests/test-wasm-i64.js
+--- a/tests/test-wasm-i64.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-wasm-i64.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,27 +0,0 @@
+-import assert from './assert.js';
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const data = await tjs.readFile(path.join(import.meta.dirname, 'wasm', 'i64.wasm'));
+-    const { instance } = await WebAssembly.instantiate(data);
+-    const { exports } = instance;
+-
+-    assert.eq(exports.add(1, 2), 3, 'add works');
+-    assert.eq(exports.add(1, -2), -1, 'add works with negatives');
+-    assert.eq(exports.add(1n, 2n), 3, 'add works with BigInt');
+-    assert.eq(exports.sub(1, 2), -1, 'sub works');
+-    assert.eq(exports.sub(1, -2), 3, 'sub works with negatives');
+-    assert.eq(exports.mul(2, 2), 4, 'mul works');
+-    assert.eq(exports.mul(2, -2), -4, 'mul works with negatives');
+-    assert.eq(String(exports.mul(BigInt(Number.MAX_SAFE_INTEGER), 100n)), '900719925474099100', 'mul works with BigInt');
+-    assert.eq(String(exports.mul(0x0123456789abcdefn, 0xfedcba9876543210n)), '2465395958572223728', 'mul works with BigInt 2');
+-    assert.eq(exports.div_s(4, 2), 2, 'div_s works');
+-    try {
+-        exports.div_s(1, 0);
+-    } catch(e) {
+-        assert.ok(e instanceof WebAssembly.RuntimeError, 'div_s divide by zero throws RuntimeError');
+-    }
+-    assert.eq(exports.div_u(-1, -1), 1, 'div_u works');
+-    assert.eq(exports.rem_s(5, 2), 1, 'rem_s works');
+-})();
+diff -Naur a/tests/test-wasm-multi.js b/tests/test-wasm-multi.js
+--- a/tests/test-wasm-multi.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-wasm-multi.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,15 +0,0 @@
+-import assert from './assert.js';
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const data = await tjs.readFile(path.join(import.meta.dirname, 'wasm', 'multi.wasm'));
+-    const { instance } = await WebAssembly.instantiate(data);
+-    const { exports } = instance;
+-
+-    const v = exports.round_trip_many(1, 5, 42);
+-    assert.ok(Array.isArray(v), 'return value is an array');
+-    assert.eq(v[0], 1, '1st arg matches');
+-    assert.eq(v[1], 5, '2nd arg matches');
+-    assert.eq(v[2], 42, '3rd arg matches');
+-})();
+diff -Naur a/tests/test-wasm-wasi.js b/tests/test-wasm-wasi.js
+--- a/tests/test-wasm-wasi.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/test-wasm-wasi.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,23 +0,0 @@
+-import assert from './assert.js';
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const args = [
+-        tjs.exepath,
+-        path.join(import.meta.dirname, 'wasi', 'launcher.js'),
+-        'test.wasm'
+-    ];
+-    const proc = tjs.spawn(args, { stdout: 'pipe' });
+-    const status = await proc.wait();
+-    assert.eq(status.exit_status, 0, 'WASI ran succesfully');
+-    assert.eq(status.term_signal, null, 'WASI ran succesfully 2');
+-    const buf = new Uint8Array(4096);
+-    const nread = await proc.stdout.read(buf);
+-    assert.ok(nread > 0, 'stdout was read');
+-    const dataStr = new TextDecoder().decode(buf.subarray(0, nread));
+-    assert.ok(dataStr.match(/Hello world/), 'data matches 1');
+-    assert.ok(dataStr.match(/Constructor OK/), 'data matches 2');
+-    assert.ok(dataStr.match(/Hello printf!/), 'data matches 3');
+-    assert.ok(dataStr.match(/fib\(20\)/), 'data matches 4');
+-})();
+diff -Naur a/tests/wasi/launcher.js b/tests/wasi/launcher.js
+--- a/tests/wasi/launcher.js	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasi/launcher.js	1969-12-31 21:00:00.000000000 -0300
+@@ -1,14 +0,0 @@
+-import { path } from '@tjs/std';
+-
+-
+-(async () => {
+-    const script = tjs.args[2];
+-    const args = tjs.args.slice(3);
+-    const bytes = await tjs.readFile(path.join(import.meta.dirname,script));
+-    const module = new WebAssembly.Module(bytes);
+-    const wasi = new WebAssembly.WASI({ args });
+-    const importObject = { wasi_unstable: wasi.wasiImport };
+-    const instance = new WebAssembly.Instance(module, importObject);
+-
+-    wasi.start(instance);
+-})();
+diff -Naur a/tests/wasi/test.c b/tests/wasi/test.c
+--- a/tests/wasi/test.c	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasi/test.c	1969-12-31 21:00:00.000000000 -0300
+@@ -1,143 +0,0 @@
+-#include <stdio.h>
+-#include <string.h>
+-#include <time.h>
+-#include <sys/stat.h>
+-#include <fcntl.h>
+-
+-#define WASM_EXPORT __attribute__((used)) __attribute__((visibility ("default")))
+-
+-/*
+- * Helpers
+- */
+-
+-static inline
+-struct timespec timespec_diff(struct timespec start, struct timespec end)
+-{
+-  struct timespec temp;
+-  if ((end.tv_nsec-start.tv_nsec)<0) {
+-    temp.tv_sec = end.tv_sec-start.tv_sec-1;
+-    temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+-  } else {
+-    temp.tv_sec = end.tv_sec-start.tv_sec;
+-    temp.tv_nsec = end.tv_nsec-start.tv_nsec;
+-  }
+-  return temp;
+-}
+-
+-static inline
+-int rand_range(int min, int max){
+-   return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+-}
+-
+-WASM_EXPORT
+-uint32_t fib(uint32_t n)
+-{
+-  if(n < 2) {
+-    return n;
+-  }
+-  return fib(n-1) + fib(n-2);
+-}
+-
+-/*
+- * Tests
+- */
+-
+-static char gString[16];
+-
+-__attribute__((constructor))
+-void test_init_some_global() {
+-  static const char data[] = "Constructor OK\n";
+-  memcpy(gString, data, sizeof(data));
+-}
+-
+-void test_constructor() {
+-  fwrite(gString, 1, sizeof(gString)-1, stdout);
+-}
+-
+-void test_write() {
+-  fwrite("Hello world\n", 1, 12, stdout);
+-}
+-
+-void test_printf() {
+-  printf("Hello %s!\n", "printf");
+-}
+-
+-void test_args(int argc, char **argv) {
+-  printf("Args: ");
+-  for (int i = 0; i < argc; i++) {
+-    printf("%s; ", argv[i]);
+-  }
+-  puts("");
+-}
+-
+-void test_random() {
+-  unsigned entropy;
+-  getentropy(&entropy, sizeof(entropy));
+-  srand(entropy);
+-  int x = rand_range(0, 10);
+-  int y = rand_range(0, 10);
+-  printf("%d + %d = %d\n", x, y, x+y);
+-}
+-
+-void test_gettime() {
+-  struct timespec now;
+-  clock_gettime(CLOCK_REALTIME, &now);
+-  printf("Now: %lld sec, %ld ns\n", now.tv_sec, now.tv_nsec);
+-}
+-
+-void test_perf_fib(uint32_t n) {
+-  struct timespec start, finish;
+-  uint32_t result;
+-
+-  printf("fib(%d) = ", n);
+-  fflush(stdout);
+-
+-  // Chew up some CPU time
+-  clock_gettime(CLOCK_REALTIME, &start);
+-  result = fib(n);
+-  clock_gettime(CLOCK_REALTIME, &finish);
+-
+-  struct timespec delta = timespec_diff(start, finish);
+-
+-  //unsigned ms = (delta.tv_sec*1000) + (delta.tv_nsec/1000000);
+-  //printf("%d [%u ms]\n", result, ms);
+-
+-  double fms = (delta.tv_sec*1000.0) + (delta.tv_nsec/1000000.0);
+-  printf("%d [%.3f ms]\n", result, fms);
+-}
+-
+-void test_cat(char* fn) {
+-  int file = open(fn, O_RDONLY);
+-  if (file >= 0) {
+-    char c = 0;
+-    while (read(file, &c, sizeof(c)) > 0) {
+-      printf("%02x ", c);
+-    }
+-    close(file);
+-    puts("");
+-  } else {
+-    printf("Cannot open %s\n", fn);
+-  }
+-}
+-
+-/*
+- * Main
+- */
+-
+-int main(int argc, char **argv)
+-{
+-  test_write();
+-  test_constructor();
+-  test_printf();
+-  test_args(argc, argv);
+-  test_gettime();
+-  test_random();
+-  test_perf_fib(20);
+-
+-  if (0 == strcmp(argv[1], "cat")) {
+-    test_cat(argv[2]);
+-  }
+-
+-  puts("=== done ===");
+-  return 0;
+-}
+diff -Naur a/tests/wasm/f32.wat b/tests/wasm/f32.wat
+--- a/tests/wasm/f32.wat	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasm/f32.wat	1969-12-31 21:00:00.000000000 -0300
+@@ -1,17 +0,0 @@
+-;; Test all the f32 operators on major boundary values and all special
+-;; values (except comparison and bitwise operators, which are tested in
+-;; f32_bitwise.wast and f32_cmp.wast).
+-
+-(module
+-  (func (export "add") (param $x f32) (param $y f32) (result f32) (f32.add (local.get $x) (local.get $y)))
+-  (func (export "sub") (param $x f32) (param $y f32) (result f32) (f32.sub (local.get $x) (local.get $y)))
+-  (func (export "mul") (param $x f32) (param $y f32) (result f32) (f32.mul (local.get $x) (local.get $y)))
+-  (func (export "div") (param $x f32) (param $y f32) (result f32) (f32.div (local.get $x) (local.get $y)))
+-  (func (export "sqrt") (param $x f32) (result f32) (f32.sqrt (local.get $x)))
+-  (func (export "min") (param $x f32) (param $y f32) (result f32) (f32.min (local.get $x) (local.get $y)))
+-  (func (export "max") (param $x f32) (param $y f32) (result f32) (f32.max (local.get $x) (local.get $y)))
+-  (func (export "ceil") (param $x f32) (result f32) (f32.ceil (local.get $x)))
+-  (func (export "floor") (param $x f32) (result f32) (f32.floor (local.get $x)))
+-  (func (export "trunc") (param $x f32) (result f32) (f32.trunc (local.get $x)))
+-  (func (export "nearest") (param $x f32) (result f32) (f32.nearest (local.get $x)))
+-)
+diff -Naur a/tests/wasm/f64.wat b/tests/wasm/f64.wat
+--- a/tests/wasm/f64.wat	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasm/f64.wat	1969-12-31 21:00:00.000000000 -0300
+@@ -1,17 +0,0 @@
+-;; Test all the f64 operators on major boundary values and all special
+-;; values (except comparison and bitwise operators, which are tested in
+-;; f64_bitwise.wast and f64_cmp.wast).
+-
+-(module
+-  (func (export "add") (param $x f64) (param $y f64) (result f64) (f64.add (local.get $x) (local.get $y)))
+-  (func (export "sub") (param $x f64) (param $y f64) (result f64) (f64.sub (local.get $x) (local.get $y)))
+-  (func (export "mul") (param $x f64) (param $y f64) (result f64) (f64.mul (local.get $x) (local.get $y)))
+-  (func (export "div") (param $x f64) (param $y f64) (result f64) (f64.div (local.get $x) (local.get $y)))
+-  (func (export "sqrt") (param $x f64) (result f64) (f64.sqrt (local.get $x)))
+-  (func (export "min") (param $x f64) (param $y f64) (result f64) (f64.min (local.get $x) (local.get $y)))
+-  (func (export "max") (param $x f64) (param $y f64) (result f64) (f64.max (local.get $x) (local.get $y)))
+-  (func (export "ceil") (param $x f64) (result f64) (f64.ceil (local.get $x)))
+-  (func (export "floor") (param $x f64) (result f64) (f64.floor (local.get $x)))
+-  (func (export "trunc") (param $x f64) (result f64) (f64.trunc (local.get $x)))
+-  (func (export "nearest") (param $x f64) (result f64) (f64.nearest (local.get $x)))
+-)
+diff -Naur a/tests/wasm/i32.wat b/tests/wasm/i32.wat
+--- a/tests/wasm/i32.wat	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasm/i32.wat	1969-12-31 21:00:00.000000000 -0300
+@@ -1,34 +0,0 @@
+-;; i32 operations
+-
+-(module
+-  (func (export "add") (param $x i32) (param $y i32) (result i32) (i32.add (local.get $x) (local.get $y)))
+-  (func (export "sub") (param $x i32) (param $y i32) (result i32) (i32.sub (local.get $x) (local.get $y)))
+-  (func (export "mul") (param $x i32) (param $y i32) (result i32) (i32.mul (local.get $x) (local.get $y)))
+-  (func (export "div_s") (param $x i32) (param $y i32) (result i32) (i32.div_s (local.get $x) (local.get $y)))
+-  (func (export "div_u") (param $x i32) (param $y i32) (result i32) (i32.div_u (local.get $x) (local.get $y)))
+-  (func (export "rem_s") (param $x i32) (param $y i32) (result i32) (i32.rem_s (local.get $x) (local.get $y)))
+-  (func (export "rem_u") (param $x i32) (param $y i32) (result i32) (i32.rem_u (local.get $x) (local.get $y)))
+-  (func (export "and") (param $x i32) (param $y i32) (result i32) (i32.and (local.get $x) (local.get $y)))
+-  (func (export "or") (param $x i32) (param $y i32) (result i32) (i32.or (local.get $x) (local.get $y)))
+-  (func (export "xor") (param $x i32) (param $y i32) (result i32) (i32.xor (local.get $x) (local.get $y)))
+-  (func (export "shl") (param $x i32) (param $y i32) (result i32) (i32.shl (local.get $x) (local.get $y)))
+-  (func (export "shr_s") (param $x i32) (param $y i32) (result i32) (i32.shr_s (local.get $x) (local.get $y)))
+-  (func (export "shr_u") (param $x i32) (param $y i32) (result i32) (i32.shr_u (local.get $x) (local.get $y)))
+-  (func (export "rotl") (param $x i32) (param $y i32) (result i32) (i32.rotl (local.get $x) (local.get $y)))
+-  (func (export "rotr") (param $x i32) (param $y i32) (result i32) (i32.rotr (local.get $x) (local.get $y)))
+-  (func (export "clz") (param $x i32) (result i32) (i32.clz (local.get $x)))
+-  (func (export "ctz") (param $x i32) (result i32) (i32.ctz (local.get $x)))
+-  (func (export "popcnt") (param $x i32) (result i32) (i32.popcnt (local.get $x)))
+-  (func (export "eqz") (param $x i32) (result i32) (i32.eqz (local.get $x)))
+-  (func (export "eq") (param $x i32) (param $y i32) (result i32) (i32.eq (local.get $x) (local.get $y)))
+-  (func (export "ne") (param $x i32) (param $y i32) (result i32) (i32.ne (local.get $x) (local.get $y)))
+-  (func (export "lt_s") (param $x i32) (param $y i32) (result i32) (i32.lt_s (local.get $x) (local.get $y)))
+-  (func (export "lt_u") (param $x i32) (param $y i32) (result i32) (i32.lt_u (local.get $x) (local.get $y)))
+-  (func (export "le_s") (param $x i32) (param $y i32) (result i32) (i32.le_s (local.get $x) (local.get $y)))
+-  (func (export "le_u") (param $x i32) (param $y i32) (result i32) (i32.le_u (local.get $x) (local.get $y)))
+-  (func (export "gt_s") (param $x i32) (param $y i32) (result i32) (i32.gt_s (local.get $x) (local.get $y)))
+-  (func (export "gt_u") (param $x i32) (param $y i32) (result i32) (i32.gt_u (local.get $x) (local.get $y)))
+-  (func (export "ge_s") (param $x i32) (param $y i32) (result i32) (i32.ge_s (local.get $x) (local.get $y)))
+-  (func (export "ge_u") (param $x i32) (param $y i32) (result i32) (i32.ge_u (local.get $x) (local.get $y)))
+-)
+-
+diff -Naur a/tests/wasm/i64.wat b/tests/wasm/i64.wat
+--- a/tests/wasm/i64.wat	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasm/i64.wat	1969-12-31 21:00:00.000000000 -0300
+@@ -1,33 +0,0 @@
+-;; i64 operations
+-
+-(module
+-  (func (export "add") (param $x i64) (param $y i64) (result i64) (i64.add (local.get $x) (local.get $y)))
+-  (func (export "sub") (param $x i64) (param $y i64) (result i64) (i64.sub (local.get $x) (local.get $y)))
+-  (func (export "mul") (param $x i64) (param $y i64) (result i64) (i64.mul (local.get $x) (local.get $y)))
+-  (func (export "div_s") (param $x i64) (param $y i64) (result i64) (i64.div_s (local.get $x) (local.get $y)))
+-  (func (export "div_u") (param $x i64) (param $y i64) (result i64) (i64.div_u (local.get $x) (local.get $y)))
+-  (func (export "rem_s") (param $x i64) (param $y i64) (result i64) (i64.rem_s (local.get $x) (local.get $y)))
+-  (func (export "rem_u") (param $x i64) (param $y i64) (result i64) (i64.rem_u (local.get $x) (local.get $y)))
+-  (func (export "and") (param $x i64) (param $y i64) (result i64) (i64.and (local.get $x) (local.get $y)))
+-  (func (export "or") (param $x i64) (param $y i64) (result i64) (i64.or (local.get $x) (local.get $y)))
+-  (func (export "xor") (param $x i64) (param $y i64) (result i64) (i64.xor (local.get $x) (local.get $y)))
+-  (func (export "shl") (param $x i64) (param $y i64) (result i64) (i64.shl (local.get $x) (local.get $y)))
+-  (func (export "shr_s") (param $x i64) (param $y i64) (result i64) (i64.shr_s (local.get $x) (local.get $y)))
+-  (func (export "shr_u") (param $x i64) (param $y i64) (result i64) (i64.shr_u (local.get $x) (local.get $y)))
+-  (func (export "rotl") (param $x i64) (param $y i64) (result i64) (i64.rotl (local.get $x) (local.get $y)))
+-  (func (export "rotr") (param $x i64) (param $y i64) (result i64) (i64.rotr (local.get $x) (local.get $y)))
+-  (func (export "clz") (param $x i64) (result i64) (i64.clz (local.get $x)))
+-  (func (export "ctz") (param $x i64) (result i64) (i64.ctz (local.get $x)))
+-  (func (export "popcnt") (param $x i64) (result i64) (i64.popcnt (local.get $x)))
+-  (func (export "eqz") (param $x i64) (result i32) (i64.eqz (local.get $x)))
+-  (func (export "eq") (param $x i64) (param $y i64) (result i32) (i64.eq (local.get $x) (local.get $y)))
+-  (func (export "ne") (param $x i64) (param $y i64) (result i32) (i64.ne (local.get $x) (local.get $y)))
+-  (func (export "lt_s") (param $x i64) (param $y i64) (result i32) (i64.lt_s (local.get $x) (local.get $y)))
+-  (func (export "lt_u") (param $x i64) (param $y i64) (result i32) (i64.lt_u (local.get $x) (local.get $y)))
+-  (func (export "le_s") (param $x i64) (param $y i64) (result i32) (i64.le_s (local.get $x) (local.get $y)))
+-  (func (export "le_u") (param $x i64) (param $y i64) (result i32) (i64.le_u (local.get $x) (local.get $y)))
+-  (func (export "gt_s") (param $x i64) (param $y i64) (result i32) (i64.gt_s (local.get $x) (local.get $y)))
+-  (func (export "gt_u") (param $x i64) (param $y i64) (result i32) (i64.gt_u (local.get $x) (local.get $y)))
+-  (func (export "ge_s") (param $x i64) (param $y i64) (result i32) (i64.ge_s (local.get $x) (local.get $y)))
+-  (func (export "ge_u") (param $x i64) (param $y i64) (result i32) (i64.ge_u (local.get $x) (local.get $y)))
+-)
+diff -Naur a/tests/wasm/multi.wat b/tests/wasm/multi.wat
+--- a/tests/wasm/multi.wat	2022-06-27 13:03:16.731052063 -0300
++++ b/tests/wasm/multi.wat	1969-12-31 21:00:00.000000000 -0300
+@@ -1,10 +0,0 @@
+-(module
+-  (func $round_trip_many
+-    (export "round_trip_many")
+-    (param i64 i64 i64)
+-    (result i64 i64 i64)
+-
+-    local.get 0
+-    local.get 1
+-    local.get 2)
+-)
