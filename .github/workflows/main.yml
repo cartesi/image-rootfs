@@ -1,5 +1,7 @@
 name: Build
 on: [push]
+env:
+  TOOLCHAIN_VERSION: 0.10.0
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -47,7 +49,7 @@ jobs:
           load: true
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.9.1
+            TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}
 
       - name: Export rootfs.ext2 artifact
         run: make copy IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | head -1 | cut -d "," -f 1 | xargs`
@@ -73,7 +75,7 @@ jobs:
           load: false
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.9.1
+            TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}
 
   build-fd-emulation:
     runs-on: ubuntu-22.04
@@ -126,7 +128,7 @@ jobs:
           load: true
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.9.1-fd-emulation
+            TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}-fd-emulation
             RISCV_ARCH=rv64imafd
             RISCV_ABI=lp64d
 
@@ -161,7 +163,6 @@ jobs:
           load: false
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
-            TOOLCHAIN_VERSION=0.9.1-fd-emulation
+            TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}-fd-emulation
             RISCV_ARCH=rv64imafd
             RISCV_ABI=lp64d
-

@@ -42,7 +42,7 @@ USER developer
 
 RUN \
     cd $BUILD_BASE && \
-    git clone --branch 2020.08.1 --depth 1 \
+    git clone --branch 2022.02.3 --depth 1 \
         https://github.com/buildroot/buildroot.git
 
 COPY skel $BUILD_BASE/buildroot/skel

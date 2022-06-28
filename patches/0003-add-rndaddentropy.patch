@@ -1,14 +1,14 @@
 diff -Naur a/package/Config.in b/package/Config.in
 --- a/package/Config.in	2020-06-23 05:22:00.753337000 +0000
 +++ b/package/Config.in	2020-06-23 05:03:33.967430000 +0000
-@@ -2372,6 +2372,7 @@
+@@ -2568,6 +2568,7 @@
  	source "package/quota/Config.in"
  	source "package/quotatool/Config.in"
  	source "package/rauc/Config.in"
 +	source "package/rndaddentropy/Config.in"
  	source "package/rsyslog/Config.in"
  	source "package/runc/Config.in"
- 	source "package/s6/Config.in"
+ 	source "package/s390-tools/Config.in"
 diff -Naur a/package/rndaddentropy/Config.in b/package/rndaddentropy/Config.in
 --- a/package/rndaddentropy/Config.in	1970-01-01 00:00:00.000000000 +0000
 +++ b/package/rndaddentropy/Config.in	2020-06-23 05:06:53.707759000 +0000
