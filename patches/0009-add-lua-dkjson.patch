@@ -1,0 +1,46 @@
+diff --git a/package/Config.in b/package/Config.in
+--- a/package/Config.in
++++ b/package/Config.in
+@@ -689,6 +690,7 @@ menu "Lua libraries/modules"
+ 	source "package/lua-csnappy/Config.in"
+ 	source "package/lua-curl/Config.in"
+ 	source "package/lua-datafile/Config.in"
++	source "package/lua-dkjson/Config.in"
+ 	source "package/lua-ev/Config.in"
+ 	source "package/lua-fifo/Config.in"
+ 	source "package/lua-flu/Config.in"
+diff --git a/package/lua-dkjson/Config.in b/package/lua-dkjson/Config.in
+new file mode 100644
+--- /dev/null
++++ b/package/lua-dkjson/Config.in
+@@ -0,0 +1,7 @@
++config BR2_PACKAGE_LUA_DKJSON
++	bool "lua-dkjson"
++	select BR2_PACKAGE_LPEG # runtime
++	help
++	  Lua dkjson is a module for encoding and decoding JSON data.
++
++	  http://dkolf.de/src/dkjson-lua.fsl/home
+diff --git a/package/lua-dkjson/lua-dkjson.hash b/package/lua-dkjson/lua-dkjson.hash
+new file mode 100644
+--- /dev/null
++++ b/package/lua-dkjson/lua-dkjson.hash
+@@ -0,0 +1,2 @@
++# computed by luarocks/buildroot
++sha256 e4ba15f2a85f84ffc7f628157a4ad16b2b04ba05eb44a2e5956fa46bd104125e  dkjson-2.6-1.src.rock
+diff --git a/package/lua-dkjson/lua-dkjson.mk b/package/lua-dkjson/lua-dkjson.mk
+new file mode 100644
+--- /dev/null
++++ b/package/lua-dkjson/lua-dkjson.mk
+@@ -0,0 +1,11 @@
++################################################################################
++#
++# lua-dkjson
++#
++################################################################################
++
++LUA_DKJSON_VERSION = 2.6-1
++LUA_DKJSON_NAME_UPSTREAM = dkjson
++LUA_DKJSON_LICENSE = MIT/X11
++
++$(eval $(luarocks-package))
