@@ -45,12 +45,12 @@ RUN \
     git clone --branch 2022.02.3 --depth 1 \
         https://github.com/buildroot/buildroot.git
 
-COPY skel $BUILD_BASE/buildroot/skel
-COPY cartesi-buildroot-config $BUILD_BASE/buildroot
-COPY cartesi-busybox-fragment $BUILD_BASE/buildroot
-COPY patches $BUILD_BASE/buildroot/patches
-COPY external $BUILD_BASE/buildroot/external
-COPY local.mk $BUILD_BASE/buildroot/local.mk
+COPY --chown=developer:developer skel $BUILD_BASE/buildroot/skel
+COPY --chown=developer:developer cartesi-buildroot-config $BUILD_BASE/buildroot
+COPY --chown=developer:developer cartesi-busybox-fragment $BUILD_BASE/buildroot
+COPY --chown=developer:developer patches $BUILD_BASE/buildroot/patches
+COPY --chown=developer:developer external $BUILD_BASE/buildroot/external
+COPY --chown=developer:developer local.mk $BUILD_BASE/buildroot/local.mk
 
 # Never use -jN with buildroot
 RUN \
