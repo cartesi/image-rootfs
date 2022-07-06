@@ -50,6 +50,8 @@ jobs:
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
             TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}
+          cache-from: type=gha,mode=max,scope=regular
+          cache-to: type=gha,scope=regular
 
       - name: Export rootfs.ext2 artifact
         run: make copy IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | head -1 | cut -d "," -f 1 | xargs`
@@ -76,6 +78,8 @@ jobs:
           build-args: |
             TOOLCHAIN_REPOSITORY=${{ secrets.DOCKER_ORGANIZATION }}/toolchain
             TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}
+          cache-from: type=gha,mode=max,scope=regular
+          cache-to: type=gha,scope=regular
 
   build-fd-emulation:
     runs-on: ubuntu-22.04
@@ -131,6 +135,8 @@ jobs:
             TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}-fd-emulation
             RISCV_ARCH=rv64imafd
             RISCV_ABI=lp64d
+          cache-from: type=gha,mode=max,scope=fd
+          cache-to: type=gha,scope=fd
 
       - name: Export rootfs.ext2 artifact
         run: make copy IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | head -1 | cut -d "," -f 1 | xargs`
@@ -166,3 +172,5 @@ jobs:
             TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}-fd-emulation
             RISCV_ARCH=rv64imafd
             RISCV_ABI=lp64d
+          cache-from: type=gha,mode=max,scope=fd
+          cache-to: type=gha,scope=fd
