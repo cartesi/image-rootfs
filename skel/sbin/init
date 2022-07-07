@@ -41,12 +41,28 @@ done
 /sbin/ifconfig lo 127.0.0.1
 
 if [ -n "$*" ]; then
-    export HOME=/
+    if [ -c /dev/rollup ]; then
+        chown root:dapp /dev/rollup
+        chmod 660 /dev/rollup
+    fi
+
+    if [ -c /dev/yield ]; then
+        chown root:dapp /dev/yield
+        chmod 660 /dev/yield
+    fi
+
     export PS1='\h:\w # '
     if [ -f "$DEFAULT_ENV_FILE" ]; then
         source $DEFAULT_ENV_FILE
     fi
-    setsid cttyhack /bin/sh -c "$*"
+    if [ "$single" == "yes" ]; then
+        export HOME=/
+        setsid cttyhack /bin/sh -c "$*"
+    else
+        export HOME=/home/dapp/
+        cd $HOME
+        setsid cttyhack /bin/su -p dapp -s /bin/sh -c "$*"
+    fi
 else
     echo "Nothing to do."
 fi

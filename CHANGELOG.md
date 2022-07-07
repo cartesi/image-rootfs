@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Remove dehash tools
 - Updated toolchain version to v0.11.0
+- Create a dapp user and set it as the default
 
 ## [0.13.0] - 2022-07-22
 ### Changed
