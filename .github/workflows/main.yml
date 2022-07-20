@@ -14,6 +14,9 @@ jobs:
       - name: Copy default Buildroot and Busybox config
         run: make init-config
 
+      - name: Setup primary site
+        run: sed -i -e 's#BR2_PRIMARY_SITE=""#BR2_PRIMARY_SITE="http://sources.buildroot.net"#' cartesi-buildroot-config
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
