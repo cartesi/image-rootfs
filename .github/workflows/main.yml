@@ -2,9 +2,17 @@ name: Build
 on: [push]
 env:
   TOOLCHAIN_VERSION: 0.10.0
+  CACHE_DIR: /home/runner/work/image-rootfs/image-rootfs/cache
 jobs:
   build:
     runs-on: ubuntu-22.04
+    services:
+      nginx:
+        image: nginx
+        ports:
+          - 8080:80
+        volumes:
+          - /home/runner/work/cache:/usr/share/nginx/html
     steps:
       - uses: actions/checkout@v2
         with:
@@ -15,7 +23,18 @@ jobs:
         run: make init-config
 
       - name: Setup primary site
-        run: sed -i -e 's#BR2_PRIMARY_SITE=""#BR2_PRIMARY_SITE="http://sources.buildroot.net"#' cartesi-buildroot-config
+        run: sed -i -e 's#BR2_PRIMARY_SITE=""#BR2_PRIMARY_SITE="http://172.17.0.1:8080"#' cartesi-buildroot-config
+
+      - name: Setup download cache
+        id: buildroot-cache
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-buildroot-cache-files
+          path: ${{ env.CACHE_DIR }}
+          restore-keys: ${{ runner.os }}-buildroot-cache-files
+
+      - name: Copy GitHub cache to nginx cache folder
+        run: if [ -d ${{ env.CACHE_DIR }} ]; then sudo mv ${{ env.CACHE_DIR }}/* /home/runner/work/cache; fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -58,6 +77,9 @@ jobs:
 
       - name: Export rootfs.ext2 artifact
         run: make copy IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | head -1 | cut -d "," -f 1 | xargs`
+
+      - name: Export download cache
+        run: make copy-br2-dl-cache CACHE_DIR=${{ env.CACHE_DIR }} IMG=`echo "${{ steps.docker_meta.outputs.tags }}" | head -1 | cut -d "," -f 1 | xargs`
 
       - uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/v')

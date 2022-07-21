@@ -93,3 +93,9 @@ clean: clean-config
 
 copy:
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID
+
+copy-br2-dl-cache: CACHE_DIR=cache
+copy-br2-dl-cache:
+	ID=`docker create $(IMG)` && \
+	   docker cp $$ID:/opt/riscv/rootfs/buildroot/dl $(CACHE_DIR) && \
+	   docker rm -v $$ID
