@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.14.0] - 2022-08-31
+## [0.14.0] - 2022-09-01
 ### Changed
 - Remove dehash tools
 - Updated toolchain version to v0.11.0
