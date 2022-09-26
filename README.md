@@ -35,6 +35,7 @@ The following options are available as `make` targets:
 - **run-as-root**: runs the generated image as root
 - **push**: pushes the image to the registry repository
 - **submodules**: updates the git submodules recusively 
+- **config**: Edit buildroot .config of the docker image (via "make menuconfig")
 
 #### Makefile container options
 
