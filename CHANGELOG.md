@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- reduce ext2 image size to 68MB
 
 ## [0.14.1] - 2022-09-08
 ### Changed
@@ -23,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.12.0] - 2022-07-01
 ### Changed
+- Bump buildroot to 2022.02.3
 - Moved showing cartesi-logo from bbl to init
 - Added LuaSocket and LPeg libraries
 - Add machine-emulator-tools as a submodule.
