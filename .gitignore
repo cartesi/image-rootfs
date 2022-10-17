@@ -1,3 +1,4 @@
 rootfs.ext2
 cartesi-buildroot-config
 cartesi-busybox-fragment
+skel/etc/os-release

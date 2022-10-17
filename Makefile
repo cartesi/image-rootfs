@@ -11,7 +11,7 @@
 # the License.
 #
 
-.PHONY: build push run share init-config copy
+.PHONY: build push run share init-config copy skel/etc/os-release
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
@@ -49,7 +49,7 @@ BUILD_ARGS += --build-arg RISCV_ABI=$(RISCV_ABI)
 .NOTPARALLEL: all
 all: build copy
 
-build: init-config
+build: init-config skel/etc/os-release
 	docker build -t $(IMG) $(BUILD_ARGS) .
 
 push:
@@ -93,6 +93,20 @@ clean: clean-config
 
 copy:
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID
+
+
+echo-os-release:
+	NAME=Cartesi
+	ID=cartesi
+	PRETTY_NAME="Cartesi Linux"
+	ANSI_COLOR="1;32"
+	HOME_URL="https://cartesi.io/"
+	SUPPORT_URL="https://docs.cartesi.io/"
+	BUG_REPORT_URL="https://docs.cartesi.io/#qa"
+	VERSION_ID="$(shell git describe --long --dirty --tags)"
+
+skel/etc/os-release:
+	$(MAKE) --no-print-directory echo-os-release > $@
 
 copy-br2-dl-cache: CACHE_DIR=cache
 copy-br2-dl-cache:
