@@ -4,6 +4,9 @@
 #
 ################################################################################
 
+RISCV_ARCH ?= rv64g
+RISCV_ABI ?= lp64d
+
 MACHINE_EMULATOR_TOOLS_VERSION = v0.6.0
 MACHINE_EMULATOR_TOOLS_SOURCE = $(MACHINE_EMULATOR_TOOLS_VERSION).tar.gz
 MACHINE_EMULATOR_TOOLS_SITE = https://github.com/cartesi/machine-emulator-tools/archive
@@ -11,7 +14,7 @@ MACHINE_EMULATOR_TOOLS_LICENSE = Apache-2.0
 MACHINE_EMULATOR_TOOLS_LICENSE_FILES = LICENSE
 MACHINE_EMULATOR_TOOLS_INSTALL_STAGING = NO
 
-MACHINE_EMULATOR_TOOLS_CARGO_ENV = CC=$(TARGET_CC) CXX=$(TARGET_CXX) CFLAGS="-march=rv64ima -mabi=lp64"
+MACHINE_EMULATOR_TOOLS_CARGO_ENV = CC=$(TARGET_CC) CXX=$(TARGET_CXX) CFLAGS="-march=$(RISCV_ARCH) -mabi=$(RISCV_ABI)" RISCV_ARCH=$(RISCV_ARCH) RISCV_ABI=$(RISCV_ABI)
 MACHINE_EMULATOR_TOOLS_CARGO_OPTS = -Z build-std=std,core,alloc,panic_abort,proc_macro --release
 
 ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_YIELD),y)
@@ -43,20 +46,20 @@ endif
 
 ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER),y)
 define BUILD_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
-    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/rollup-http-server/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/rollup-http-server/Cargo.toml
+    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/rollup-http-server/$(RISCV_ARCH)-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/rollup-http-server/Cargo.toml
 endef
 define INSTALL_MACHINE_EMULATOR_TOOLS_ROLLUP_HTTP_SERVER
-    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/rollup-http-server/target/riscv64ima-cartesi-linux-gnu/release/rollup-http-server $(TARGET_DIR)/opt/cartesi/bin/rollup-http-server
+    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/rollup-http-server/target/$(RISCV_ARCH)-cartesi-linux-gnu/release/rollup-http-server $(TARGET_DIR)/opt/cartesi/bin/rollup-http-server
     $(INSTALL) -D -m 0755 $(@D)/linux/utils/rollup-init $(TARGET_DIR)/opt/cartesi/bin/rollup-init
 endef
 endif
 
 ifeq ($(BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ECHO_DAPP),y)
 define BUILD_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
-    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/echo-dapp/riscv64ima-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/echo-dapp/Cargo.toml
+    $(MACHINE_EMULATOR_TOOLS_CARGO_ENV) cargo build $(MACHINE_EMULATOR_TOOLS_CARGO_OPTS) --target $(@D)/linux/rollup/http/echo-dapp/$(RISCV_ARCH)-cartesi-linux-gnu.json --manifest-path $(@D)/linux/rollup/http/echo-dapp/Cargo.toml
 endef
 define INSTALL_MACHINE_EMULATOR_TOOLS_ECHO_DAPP
-    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/echo-dapp/target/riscv64ima-cartesi-linux-gnu/release/echo-dapp $(TARGET_DIR)/opt/cartesi/bin/echo-dapp
+    $(INSTALL) -D -m 0755 $(@D)/linux/rollup/http/echo-dapp/target/$(RISCV_ARCH)-cartesi-linux-gnu/release/echo-dapp $(TARGET_DIR)/opt/cartesi/bin/echo-dapp
 endef
 endif
 

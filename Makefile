@@ -15,18 +15,12 @@
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
-TOOLCHAIN_TAG ?= 0.11.0
+TOOLCHAIN_TAG ?= 0.12.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
-RISCV_ARCH ?= rv64ima
-RISCV_ABI ?= lp64
-
-ifeq ($(fd_emulation),yes)
-BUILDROOT_CONFIG = configs/lp64d-buildroot-config
-RISCV_ARCH = rv64imafd
-RISCV_ABI = lp64d
-endif
+RISCV_ARCH ?= rv64g
+RISCV_ABI ?= lp64d
 
 CONTAINER_BASE := /opt/cartesi/rootfs
 

@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- reduce ext2 image size to 68MB
+- Enabled use of floating-point instructions
+- Updated toolchain to v0.12.0
+- Reduced ext2 image size to 68MB
 
 ## [0.14.1] - 2022-09-08
 ### Changed
