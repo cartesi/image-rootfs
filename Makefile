@@ -22,12 +22,15 @@ BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 RISCV_ARCH ?= rv64g
 RISCV_ABI ?= lp64d
 
+ROOTFS_VERSION ?= $(shell git describe --dirty --tags)
+ROOTFS_FILENAME ?= rootfs-$(ROOTFS_VERSION).ext2
+
 CONTAINER_BASE := /opt/cartesi/rootfs
 
 IMG_REPO ?= cartesi/rootfs
 IMG ?= $(IMG_REPO):$(TAG)
 BASE:=/opt/riscv
-ART:=$(BASE)/rootfs/artifacts/rootfs.ext2
+ART:=$(BASE)/rootfs/artifacts/$(ROOTFS_FILENAME)
 
 ifneq ($(TOOLCHAIN_DOCKER_REPOSITORY),)
 BUILD_ARGS := --build-arg TOOLCHAIN_REPOSITORY=$(TOOLCHAIN_DOCKER_REPOSITORY)
@@ -39,6 +42,7 @@ endif
 
 BUILD_ARGS += --build-arg RISCV_ARCH=$(RISCV_ARCH)
 BUILD_ARGS += --build-arg RISCV_ABI=$(RISCV_ABI)
+BUILD_ARGS += --build-arg ROOTFS_FILENAME=$(ROOTFS_FILENAME)
 
 .NOTPARALLEL: all
 all: build copy
@@ -83,7 +87,7 @@ clean-config:
 	rm -f ./cartesi-buildroot-config ./cartesi-busybox-fragment
 
 clean: clean-config
-	rm -f rootfs.ext2
+	rm -f $(ROOTFS_FILENAME)
 
 copy:
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID
@@ -97,7 +101,7 @@ echo-os-release:
 	HOME_URL="https://cartesi.io/"
 	SUPPORT_URL="https://docs.cartesi.io/"
 	BUG_REPORT_URL="https://docs.cartesi.io/#qa"
-	VERSION_ID="$(shell git describe --long --dirty --tags)"
+	VERSION_ID="$(ROOTFS_VERSION)"
 
 skel/etc/os-release:
 	$(MAKE) --no-print-directory echo-os-release > $@
@@ -107,3 +111,6 @@ copy-br2-dl-cache:
 	ID=`docker create $(IMG)` && \
 	   docker cp $$ID:/opt/riscv/rootfs/buildroot/dl $(CACHE_DIR) && \
 	   docker rm -v $$ID
+
+rootfs-filename:
+	@echo $(ROOTFS_FILENAME)

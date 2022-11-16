@@ -27,6 +27,7 @@ ARG RISCV_ARCH=rv64g
 ARG RISCV_ABI=lp64d
 ENV RISCV_ARCH $RISCV_ARCH
 ENV RISCV_ABI $RISCV_ABI
+ARG ROOTFS_FILENAME=rootfs.ext2
 
 ENV RISCV "$BASE/riscv64-cartesi-linux-gnu"
 ENV PATH "$RISCV/bin:${OLDPATH}"
@@ -62,8 +63,8 @@ RUN \
     cp local.mk work/local.mk && \
     make BR2_EXTERNAL=$BUILD_BASE/buildroot/external O=work olddefconfig && \
     make -C work && \
-    cp work/images/rootfs.ext2 $BUILD_BASE/artifacts && \
-    truncate -s %4096 $BUILD_BASE/artifacts/rootfs.ext2
+    cp work/images/rootfs.ext2 $BUILD_BASE/artifacts/$ROOTFS_FILENAME && \
+    truncate -s %4096 $BUILD_BASE/artifacts/$ROOTFS_FILENAME
 
 USER root
 
