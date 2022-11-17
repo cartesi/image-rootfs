@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Enabled use of floating-point instructions
 - Updated toolchain to v0.12.0
+- Updated Linux Kernel to v5.15.63-ctsi-1
 - Reduced ext2 image size to 68MB
 
 ## [0.14.1] - 2022-09-08
