@@ -5,11 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.15.0] - 2022-11-18
 ### Changed
 - Enabled use of floating-point instructions
 - Updated toolchain to v0.12.0
 - Updated Linux Kernel to v5.15.63-ctsi-1
 - Reduced ext2 image size to 68MB
+- Updated machine-emulator-tools to v0.9.0
 
 ## [0.14.1] - 2022-09-08
 ### Changed
@@ -74,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [0.2.0]
 - [0.1.0]
 
-[Unreleased]: https://github.com/cartesi/image-rootfs/compare/v0.14.1...HEAD
+[Unreleased]: https://github.com/cartesi/image-rootfs/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.15.0
 [0.14.1]: https://github.com/cartesi/image-rootfs/releases/tag/v0.14.1
 [0.14.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.14.0
 [0.13.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.13.0

@@ -87,7 +87,7 @@ clean-config:
 	rm -f ./cartesi-buildroot-config ./cartesi-busybox-fragment
 
 clean: clean-config
-	rm -f $(ROOTFS_FILENAME)
+	rm -f rootfs*.ext2
 
 copy:
 	ID=`docker create $(IMG)` && docker cp $$ID:$(ART) . && docker rm -v $$ID
