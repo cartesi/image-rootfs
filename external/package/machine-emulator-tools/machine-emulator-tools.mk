@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-RISCV_ARCH ?= rv64g
+RISCV_ARCH ?= rv64gc
 RISCV_ABI ?= lp64d
 
 MACHINE_EMULATOR_TOOLS_VERSION = v0.6.0

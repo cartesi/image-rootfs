@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Enabled use of compressed instructions
+- Updated toolchain to v0.13.0
+
 ## [0.15.0] - 2022-11-18
 ### Changed
 - Enabled use of floating-point instructions

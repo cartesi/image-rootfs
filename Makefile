@@ -15,11 +15,11 @@
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
-TOOLCHAIN_TAG ?= 0.12.0
+TOOLCHAIN_TAG ?= 0.13.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
-RISCV_ARCH ?= rv64g
+RISCV_ARCH ?= rv64gc
 RISCV_ABI ?= lp64d
 
 ROOTFS_VERSION ?= $(shell git describe --dirty --tags)
