@@ -64,7 +64,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Create distribution details
-        run: make skel/etc/os-release
+        run: make os-release
 
       - name: Build docker image
         id: docker_build

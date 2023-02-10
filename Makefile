@@ -11,7 +11,7 @@
 # the License.
 #
 
-.PHONY: build push run share init-config copy skel/etc/os-release
+.PHONY: build push run share init-config copy os-release
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
@@ -47,7 +47,7 @@ BUILD_ARGS += --build-arg ROOTFS_FILENAME=$(ROOTFS_FILENAME)
 .NOTPARALLEL: all
 all: build copy
 
-build: init-config skel/etc/os-release
+build: init-config external/tools/skel/etc/os-release
 	docker build -t $(IMG) $(BUILD_ARGS) .
 
 push:
@@ -81,6 +81,8 @@ cartesi-buildroot-config:
 cartesi-busybox-fragment:
 	cp $(BUSYBOX_CONFIG) ./cartesi-busybox-fragment
 
+os-release: external/tools/skel/etc/os-release
+
 init-config: cartesi-buildroot-config cartesi-busybox-fragment
 
 clean-config:
@@ -103,7 +105,7 @@ echo-os-release:
 	BUG_REPORT_URL="https://docs.cartesi.io/#qa"
 	VERSION_ID="$(ROOTFS_VERSION)"
 
-skel/etc/os-release:
+external/tools/skel/etc/os-release:
 	$(MAKE) --no-print-directory echo-os-release > $@
 
 copy-br2-dl-cache: CACHE_DIR=cache

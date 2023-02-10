@@ -46,7 +46,7 @@ RUN \
     git clone --branch 2022.02.3 --depth 1 \
         https://github.com/buildroot/buildroot.git
 
-COPY --chown=developer:developer skel $BUILD_BASE/buildroot/skel
+COPY --chown=developer:developer external/tools/skel $BUILD_BASE/buildroot/skel
 COPY --chown=developer:developer cartesi-buildroot-config $BUILD_BASE/buildroot
 COPY --chown=developer:developer cartesi-busybox-fragment $BUILD_BASE/buildroot
 COPY --chown=developer:developer patches $BUILD_BASE/buildroot/patches
