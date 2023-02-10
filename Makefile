@@ -22,7 +22,7 @@ BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 RISCV_ARCH ?= rv64gc
 RISCV_ABI ?= lp64d
 
-ROOTFS_VERSION ?= $(shell git describe --dirty --tags)
+ROOTFS_VERSION ?= v0.16.0
 ROOTFS_FILENAME ?= rootfs-$(ROOTFS_VERSION).ext2
 
 CONTAINER_BASE := /opt/cartesi/rootfs
