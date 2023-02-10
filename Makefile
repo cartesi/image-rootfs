@@ -116,3 +116,8 @@ copy-br2-dl-cache:
 
 rootfs-filename:
 	@echo $(ROOTFS_FILENAME)
+
+external/tools/README.md:
+	@echo "repository must be clone recursively. Execute "git submodule update --init"
+	exit 1
+
