@@ -15,14 +15,14 @@
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
-TOOLCHAIN_TAG ?= 0.13.0
+TOOLCHAIN_TAG ?= 0.14.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 RISCV_ARCH ?= rv64gc
 RISCV_ABI ?= lp64d
 
-ROOTFS_VERSION ?= v0.16.0
+ROOTFS_VERSION ?= v0.17.0
 ROOTFS_FILENAME ?= rootfs-$(ROOTFS_VERSION).ext2
 
 CONTAINER_BASE := /opt/cartesi/rootfs
@@ -120,4 +120,3 @@ rootfs-filename:
 external/tools/README.md:
 	@echo "repository must be clone recursively. Execute "git submodule update --init"
 	exit 1
-
