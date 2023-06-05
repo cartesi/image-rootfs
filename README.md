@@ -1,6 +1,4 @@
-> :warning: The Cartesi team keeps working internally on the next version of this repository, following its regular development roadmap. Whenever there's a new version ready or important fix, these are published to the public source tree as new releases.
-
-# Cartesi Machine Image RootFS 
+# Cartesi Machine Image RootFS
 
 The Cartesi Image RootFS is the repository that provides the Docker configuration files to build the `rootfs.ext2` testing filesystem. This is used to run a Linux environment on the Cartesi Machine Emulator reference implementation. The current image is based on the `cartesi/toolchain` that uses Ubuntu 20.04 and GNU GCC 9.3.0. The `rootfs.ext2` is built with Buildroot 2020.05 targeting the RISC-V RV64IMA with ABI LP64 architecture.
 
@@ -30,11 +28,11 @@ To remove the generated images from your system, please refer to the Docker docu
 The following options are available as `make` targets:
 
 - **build**: builds the docker rootfs image
-- **copy**: builds the rootfs image and copy it's artifact to the host 
+- **copy**: builds the rootfs image and copy it's artifact to the host
 - **run**: runs the generated image with current user UID and GID
 - **run-as-root**: runs the generated image as root
 - **push**: pushes the image to the registry repository
-- **submodules**: updates the git submodules recusively 
+- **submodules**: updates the git submodules recusively
 - **config**: Edit buildroot .config of the docker image (via "make menuconfig")
 
 #### Makefile container options
@@ -85,4 +83,3 @@ Please note we have a [Code of Conduct](CODE_OF_CONDUCT.md), please follow it in
 
 The image-rootfs repository and all contributions are licensed under
 [APACHE 2.0](https://www.apache.org/licenses/LICENSE-2.0). Please review our [LICENSE](LICENSE) file.
-
