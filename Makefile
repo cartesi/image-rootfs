@@ -18,14 +18,14 @@
 
 TAG ?= devel
 TOOLCHAIN_DOCKER_REPOSITORY ?= cartesi/toolchain
-TOOLCHAIN_TAG ?= 0.14.0
+TOOLCHAIN_TAG ?= 0.15.0
 NEW_TAG ?= latest
 BUILDROOT_CONFIG ?= configs/default-buildroot-config
 BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 RISCV_ARCH ?= rv64gc
 RISCV_ABI ?= lp64d
 
-ROOTFS_VERSION ?= v0.17.0
+ROOTFS_VERSION ?= v0.18.0
 ROOTFS_FILENAME ?= rootfs-$(ROOTFS_VERSION).ext2
 
 CONTAINER_BASE := /opt/cartesi/rootfs
