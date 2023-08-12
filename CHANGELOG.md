@@ -5,8 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [0.18.0] - 2023-08-12
+### Added
+- Added support for amd64 and arm64 builds with depot.dev
+
 ### Changed
 - Updated license/copyright notice in all source code
+- Updated toolchain to v0.15.0
+- Updated machine-emulator-tools to v0.12.0
 
 ## [0.17.0] - 2023-04-20
 ### Changed
@@ -90,7 +97,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [0.2.0]
 - [0.1.0]
 
-[Unreleased]: https://github.com/cartesi/image-rootfs/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/cartesi/image-rootfs/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.18.0
 [0.17.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.17.0
 [0.16.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.16.0
 [0.15.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.15.0
