@@ -4,16 +4,13 @@ env:
   TOOLCHAIN_REPOSITORY: cartesi/toolchain
   TOOLCHAIN_VERSION: 0.15.0
   CACHE_DIR: /home/runner/work/image-rootfs/image-rootfs/cache
+permissions:
+  id-token: write
+  packages: write
+  contents: read
 jobs:
   build:
     runs-on: ubuntu-22.04
-    services:
-      nginx:
-        image: nginx
-        ports:
-          - 8080:80
-        volumes:
-          - /home/runner/work/cache:/usr/share/nginx/html
     steps:
       - uses: actions/checkout@v3
         with:
@@ -25,24 +22,6 @@ jobs:
 
       - name: Resolve rootfs filename from Makefile
         run: echo ROOTFS_FILENAME="$(make rootfs-filename)" >> $GITHUB_ENV
-
-      - name: Setup primary site
-        run: sed -i -e 's#BR2_PRIMARY_SITE=""#BR2_PRIMARY_SITE="http://172.17.0.1:8080"#' cartesi-buildroot-config
-
-      - name: Setup download cache
-        id: buildroot-cache
-        uses: actions/cache@v3
-        with:
-          key: ${{ runner.os }}-buildroot-cache-files
-          path: ${{ env.CACHE_DIR }}
-          restore-keys: ${{ runner.os }}-buildroot-cache-files
-
-      - name: Copy GitHub cache to nginx cache folder
-        run: if [ -d ${{ env.CACHE_DIR }} ]; then sudo mv ${{ env.CACHE_DIR }}/* /home/runner/work/cache; fi
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v2
 
       - name: Docker meta
         id: docker_meta
@@ -68,16 +47,17 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
+
       - name: Create distribution details
         run: make os-release
 
       - name: Build docker image
-        id: docker_build
-        uses: docker/build-push-action@v4
+        uses: depot/build-push-action@v1
         with:
           context: .
-          builder: ${{ steps.buildx.outputs.name }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: cartesi/rootfs:devel
           push: false
           load: true
@@ -87,6 +67,7 @@ jobs:
             ROOTFS_FILENAME=${{ env.ROOTFS_FILENAME }}
           cache-from: type=gha,scope=regular
           cache-to: type=gha,mode=max,scope=regular
+          project: ${{ vars.DEPOT_PROJECT }}
 
       - name: Export rootfs.ext2 artifact
         run: make copy
@@ -103,12 +84,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CI_TOKEN }}
 
       - name: Push docker image
-        id: docker_push
-        uses: docker/build-push-action@v4
+        uses: depot/build-push-action@v1
         with:
           context: .
-          builder: ${{ steps.buildx.outputs.name }}
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.docker_meta.outputs.tags }}
           push: true
           load: false
@@ -117,3 +96,4 @@ jobs:
             TOOLCHAIN_VERSION=${{ env.TOOLCHAIN_VERSION }}
           cache-from: type=gha,scope=regular
           cache-to: type=gha,mode=max,scope=regular
+          project: ${{ vars.DEPOT_PROJECT }}
