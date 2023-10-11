@@ -21,6 +21,12 @@ config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_IOCTL_ECHO
 	help
 	  Install ioctl-echo-loop command line utility.
 
+config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_XHALT
+	bool "xhalt"
+	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
+	help
+	  Install xhalt command line utility.
+
 config BR2_PACKAGE_MACHINE_EMULATOR_TOOLS_ROLLUP
 	bool "rollup"
 	depends on BR2_TOOLCHAIN_EXTERNAL_HAS_CARTESI_KERNEL_HEADERS
