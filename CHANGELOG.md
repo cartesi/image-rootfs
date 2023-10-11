@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2023-10-13
+### Changed
+- Updated machine-emulator-tools to v0.13.0
+
 ## [0.18.0] - 2023-08-12
 ### Added
 - Added support for amd64 and arm64 builds with depot.dev
@@ -97,7 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [0.2.0]
 - [0.1.0]
 
-[Unreleased]: https://github.com/cartesi/image-rootfs/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/cartesi/image-rootfs/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.19.0
 [0.18.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.18.0
 [0.17.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.17.0
 [0.16.0]: https://github.com/cartesi/image-rootfs/releases/tag/v0.16.0

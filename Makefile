@@ -25,7 +25,7 @@ BUSYBOX_CONFIG ?= configs/default-busybox-fragment
 RISCV_ARCH ?= rv64gc
 RISCV_ABI ?= lp64d
 
-ROOTFS_VERSION ?= v0.18.0
+ROOTFS_VERSION ?= v0.19.0
 ROOTFS_FILENAME ?= rootfs-$(ROOTFS_VERSION).ext2
 
 CONTAINER_BASE := /opt/cartesi/rootfs
